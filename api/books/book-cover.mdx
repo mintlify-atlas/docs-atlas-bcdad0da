@@ -1,0 +1,86 @@
+---
+title: 'Get Book Cover'
+description: 'Retrieve the cover image for a book'
+---
+
+## Endpoint
+
+```
+GET /covers/:id
+```
+
+Returns the cover image for a specific book. The image is served with appropriate content type headers based on the file format.
+
+## Authentication
+
+No authentication required.
+
+## Path Parameters
+
+<ParamField path="id" type="integer" required>
+  The unique identifier of the book
+</ParamField>
+
+## Response
+
+Returns the raw image file content with appropriate Content-Type header:
+
+- `image/png` for PNG files
+- `image/jpeg` for JPEG/JPG files  
+- `image/webp` for WebP files
+
+The response body contains the binary image data.
+
+## Example Request
+
+```bash
+curl https://your-dust-server.com/covers/1 --output cover.jpg
+```
+
+## Example Usage in HTML
+
+```html
+<img src="https://your-dust-server.com/covers/1" alt="Book Cover" />
+```
+
+## Example Usage in JavaScript
+
+```javascript
+fetch('https://your-dust-server.com/covers/1')
+  .then(response => response.blob())
+  .then(blob => {
+    const imageUrl = URL.createObjectURL(blob);
+    document.getElementById('cover-image').src = imageUrl;
+  });
+```
+
+## Error Responses
+
+<ResponseField name="error" type="string">
+  Error message
+</ResponseField>
+
+### 404 Not Found
+
+Returned when the book doesn't exist:
+
+```json
+{
+  "error": "Book not found"
+}
+```
+
+Or when the cover image file cannot be found:
+
+```json
+{
+  "error": "Cover not found"
+}
+```
+
+## Notes
+
+- The system automatically looks for cover images in the same directory as the book file
+- Cover images are detected by filename patterns (cover.jpg, cover.png, etc.)
+- If no cover is found locally, the endpoint returns a 404 error
+- The actual path returned in book objects (e.g., `covers/123`) maps to this endpoint

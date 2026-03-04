@@ -1,0 +1,217 @@
+---
+title: Environment Variables
+description: Complete reference for all Dust server environment variables with defaults and examples
+---
+
+Dust is configured entirely through environment variables. This page documents all available configuration options.
+
+## Required Variables
+
+<ParamField path="JWT_SECRET" type="string" required>
+  Secret key used for JWT authentication token signing and verification.
+  
+  **Generate a secure secret:**
+  ```bash
+  openssl rand -base64 32
+  ```
+  
+  <Warning>
+    Never commit your JWT_SECRET to version control. Keep it secure and private.
+  </Warning>
+</ParamField>
+
+## Library Configuration
+
+<ParamField path="DUST_DIRS" type="string">
+  Colon-separated list of directories to scan for books and comics.
+  
+  **Default:** Empty (no directories scanned)
+  
+  **Examples:**
+  ```bash
+  # Single directory
+  DUST_DIRS=/media/books
+  
+  # Multiple directories
+  DUST_DIRS=/media/books:/media/comics:/mnt/external/library
+  ```
+  
+  <Note>
+    The Dust user must have read permissions for all specified directories. See [Library Structure](/setup/library-structure) for organizing your media.
+  </Note>
+</ParamField>
+
+## Server Configuration
+
+<ParamField path="PORT" type="number" default="4001">
+  Port number the server listens on for HTTP connections.
+  
+  **Example:**
+  ```bash
+  PORT=8080
+  ```
+</ParamField>
+
+<ParamField path="DATABASE_URL" type="string" default="file:dust-{PORT}.db">
+  SQLite database connection string. Supports file-based URLs.
+  
+  **Default behavior:** If not set, creates `file:dust-{PORT}.db` in the current directory (e.g., `dust-4001.db` for port 4001)
+  
+  **Examples:**
+  ```bash
+  # Absolute path
+  DATABASE_URL=file:/app/data/dust.db
+  
+  # Relative path
+  DATABASE_URL=file:./data/library.db
+  
+  # Custom name
+  DATABASE_URL=file:my-dust-instance.db
+  ```
+  
+  <Note>
+    SQLite is bundled with the Dust binary - no separate installation required.
+  </Note>
+</ParamField>
+
+## Background Tasks
+
+<ParamField path="SCAN_INTERVAL_MINUTES" type="number" default="5">
+  How often (in minutes) Dust scans library directories for new or modified media files.
+  
+  **Example:**
+  ```bash
+  # Scan every 10 minutes
+  SCAN_INTERVAL_MINUTES=10
+  ```
+</ParamField>
+
+<ParamField path="CLEANUP_INTERVAL_MINUTES" type="number" default="60">
+  How often (in minutes) Dust removes deleted media files from the database.
+  
+  **Example:**
+  ```bash
+  # Cleanup every 2 hours
+  CLEANUP_INTERVAL_MINUTES=120
+  ```
+</ParamField>
+
+## Metadata Enhancement
+
+<ParamField path="GOOGLE_BOOKS_API_KEY" type="string">
+  Optional API key for fetching enhanced book metadata from Google Books.
+  
+  **Get an API key:**
+  https://developers.google.com/books/docs/v1/using#APIKey
+  
+  **Example:**
+  ```bash
+  GOOGLE_BOOKS_API_KEY=AIzaSyDx1234567890abcdefghijklmnopqrst
+  ```
+  
+  <Note>
+    Without this key, Dust will still fetch metadata from OpenLibrary and other sources. Google Books provides additional cover images and metadata.
+  </Note>
+</ParamField>
+
+<ParamField path="USER_AGENT_SUFFIX" type="string">
+  Optional suffix appended to the HTTP User-Agent header for metadata requests.
+  
+  **Default User-Agent format:** `Dust Server/{version} {suffix}`
+  
+  **Example:**
+  ```bash
+  USER_AGENT_SUFFIX="(contact@example.com)"
+  ```
+</ParamField>
+
+## Complete Example Configuration
+
+<CodeGroup>
+```bash .env
+# Dust Server Environment Variables
+
+# REQUIRED: JWT Secret for authentication
+JWT_SECRET=your-secure-jwt-secret-here
+
+# REQUIRED: Directories to scan for books/comics
+DUST_DIRS=/media/books:/media/comics
+
+# Server port
+PORT=4001
+
+# Database path
+DATABASE_URL=file:/app/data/dust.db
+
+# Background task intervals (in minutes)
+SCAN_INTERVAL_MINUTES=5
+CLEANUP_INTERVAL_MINUTES=60
+
+# OPTIONAL: Google Books API key for enhanced metadata
+# GOOGLE_BOOKS_API_KEY=your-google-books-api-key-here
+
+# OPTIONAL: Custom user agent suffix
+# USER_AGENT_SUFFIX="(admin@mydomain.com)"
+```
+
+```bash Docker
+# For Docker/docker-compose.yml
+environment:
+  - JWT_SECRET=${JWT_SECRET}
+  - DUST_DIRS=/app/books:/app/comics
+  - PORT=4001
+  - DATABASE_URL=file:/app/data/dust.db
+  - SCAN_INTERVAL_MINUTES=10
+  - CLEANUP_INTERVAL_MINUTES=120
+  - GOOGLE_BOOKS_API_KEY=${GOOGLE_BOOKS_API_KEY}
+```
+
+```bash Systemd
+# For /opt/dust/.env (systemd service)
+JWT_SECRET=your-secure-jwt-secret-here
+DUST_DIRS=/media/books:/media/comics
+PORT=4001
+DATABASE_URL=file:/opt/dust/data/dust.db
+SCAN_INTERVAL_MINUTES=5
+CLEANUP_INTERVAL_MINUTES=60
+```
+</CodeGroup>
+
+## Security Best Practices
+
+<Steps>
+  <Step title="Generate a strong JWT_SECRET">
+    Use a cryptographically secure random value:
+    ```bash
+    openssl rand -base64 32
+    ```
+  </Step>
+  
+  <Step title="Protect your .env file">
+    Set appropriate permissions to prevent unauthorized access:
+    ```bash
+    chmod 600 /opt/dust/.env
+    chown dust:dust /opt/dust/.env
+    ```
+  </Step>
+  
+  <Step title="Never commit secrets">
+    Add `.env` to your `.gitignore` file and use `.env.example` for templates.
+  </Step>
+  
+  <Step title="Rotate JWT_SECRET periodically">
+    When rotating secrets, all users will need to re-authenticate.
+  </Step>
+</Steps>
+
+## Environment Variable Loading
+
+Dust loads environment variables in the following order:
+
+1. System environment variables
+2. `.env` file in the working directory (if using systemd with `EnvironmentFile`)
+3. Command-line exports (e.g., `JWT_SECRET=xyz ./dust-server`)
+
+<Note>
+  Variables defined later override earlier values. Command-line exports take highest precedence.
+</Note>

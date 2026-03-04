@@ -1,0 +1,108 @@
+---
+title: 'Stream Book'
+description: 'Download or stream a book file'
+---
+
+## Endpoint
+
+```
+GET /books/:id/stream
+```
+
+Streams the book file content. Returns the raw file data with appropriate content type headers.
+
+## Authentication
+
+**Required.** Must include a valid JWT token in the Authorization header.
+
+## Path Parameters
+
+<ParamField path="id" type="integer" required>
+  The unique identifier of the book to stream
+</ParamField>
+
+## Headers
+
+<ParamField header="Authorization" type="string" required>
+  Bearer token for authentication
+  ```
+  Authorization: Bearer <your_jwt_token>
+  ```
+</ParamField>
+
+## Response
+
+Returns the raw book file content with appropriate Content-Type header:
+
+- `application/pdf` for PDF files
+- `application/epub+zip` for EPUB files
+- Default content type for other formats
+
+The response body contains the binary file content.
+
+## Example Request
+
+```bash
+curl -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." \
+  https://your-dust-server.com/books/1/stream \
+  --output book.epub
+```
+
+## Example Request (JavaScript)
+
+```javascript
+fetch('https://your-dust-server.com/books/1/stream', {
+  headers: {
+    'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'
+  }
+})
+  .then(response => response.blob())
+  .then(blob => {
+    // Create download link
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'book.epub';
+    a.click();
+  });
+```
+
+## Error Responses
+
+<ResponseField name="error" type="string">
+  Error message
+</ResponseField>
+
+### 400 Bad Request
+
+```json
+{
+  "error": "Invalid book ID"
+}
+```
+
+### 401 Unauthorized
+
+```json
+{
+  "error": "Unauthorized"
+}
+```
+
+### 404 Not Found
+
+Returned when the book record exists but the file cannot be found:
+
+```json
+{
+  "error": "Book file not found"
+}
+```
+
+Or when the book record doesn't exist:
+
+```json
+{
+  "error": "Book not found"
+}
+```

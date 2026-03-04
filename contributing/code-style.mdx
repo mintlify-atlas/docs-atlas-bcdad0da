@@ -1,0 +1,397 @@
+---
+title: Code Style Guide
+description: Code style guidelines and commit message conventions for Dust contributors
+---
+
+This guide covers code style, commit message format, and best practices for contributing to Dust.
+
+## Commit Message Format
+
+Dust uses [Conventional Commits](https://www.conventionalcommits.org/) for automated versioning and changelog generation. This format is **required** for all commits.
+
+<Warning>
+Commits that don't follow the Conventional Commits format may delay or prevent your PR from being merged.
+</Warning>
+
+### Format Structure
+
+```
+<type>(<scope>): <subject>
+
+<body>
+
+<footer>
+```
+
+**Example:**
+
+```bash
+feat(api): add book search by ISBN
+
+Implements ISBN-based search functionality allowing users
+to quickly find books by their ISBN number.
+
+Closes #456
+```
+
+### Commit Types
+
+Use these commit types to indicate the nature of your changes:
+
+#### Types That Trigger Releases
+
+- `feat:` - New feature → **minor** version bump (0.1.0 → 0.2.0)
+- `fix:` - Bug fix → **patch** version bump (0.1.0 → 0.1.1)
+- `perf:` - Performance improvement → **patch** version bump
+- `revert:` - Reverts a previous commit → **patch** version bump
+
+#### Types That Don't Trigger Releases
+
+- `docs:` - Documentation changes (shown in changelog)
+- `style:` - Code style changes (formatting, missing semicolons, etc.)
+- `refactor:` - Code refactoring (shown in changelog)
+- `test:` - Adding or updating tests
+- `build:` - Build system changes
+- `ci:` - CI/CD configuration changes
+- `chore:` - Other changes that don't modify source or test files
+
+### Scopes (Optional)
+
+Add a scope to provide more context about what area of the codebase is affected:
+
+- `feat(api): add new endpoint for book ratings`
+- `fix(auth): correct token expiration logic`
+- `docs(readme): update environment variables section`
+- `refactor(scanner): improve file detection logic`
+
+Common scopes in Dust:
+- `api` - API endpoints and routes
+- `auth` - Authentication and authorization
+- `scanner` - Book/comic scanning logic
+- `database` - Database operations
+- `metadata` - Metadata extraction and fetching
+- `config` - Configuration handling
+
+### Commit Examples
+
+#### Bug Fix
+
+```bash
+git commit -m "fix: resolve database connection timeout
+
+Fixed an issue where the database would timeout after
+30 seconds of inactivity by increasing the timeout to 5 minutes.
+
+Fixes #123"
+```
+
+#### New Feature
+
+```bash
+git commit -m "feat: add book search by ISBN
+
+Implements ISBN-based search functionality allowing users
+to quickly find books by their ISBN number.
+
+Closes #456"
+```
+
+#### Breaking Change
+
+Add `BREAKING CHANGE:` in the footer to trigger a **major** version bump (0.1.0 → 1.0.0):
+
+```bash
+git commit -m "feat: redesign authentication system
+
+Replaced JWT-based auth with OAuth2.
+
+BREAKING CHANGE: Old JWT tokens are no longer valid.
+All users must re-authenticate after this update.
+
+Closes #789"
+```
+
+#### Documentation Update
+
+```bash
+git commit -m "docs: update installation guide
+
+Added Windows-specific instructions and troubleshooting tips."
+```
+
+#### Refactoring
+
+```bash
+git commit -m "refactor(scanner): simplify file detection logic
+
+Reduced complexity of the file type detection algorithm
+without changing functionality."
+```
+
+### Why Conventional Commits?
+
+Using Conventional Commits enables:
+
+- **Automatic version bumps** - The right version is calculated from commit history
+- **Generated changelogs** - `CHANGELOG.md` is created automatically
+- **Clear change history** - Easy to understand what changed at a glance
+- **Automated releases** - CI/CD pipeline handles the entire release process
+
+<Info>
+Our CI/CD pipeline uses semantic-release to read commit messages and automate versioning. See the [Release Process](/contributing/release-process) for details.
+</Info>
+
+## Zig Code Style
+
+### Formatting
+
+Dust follows the standard Zig formatting conventions:
+
+- Use `zig fmt` to automatically format your code
+- 4 spaces for indentation (not tabs)
+- 100 character line length limit (when practical)
+- Use snake_case for variables and functions
+- Use PascalCase for types and structs
+
+```zig
+// Good
+const UserModel = struct {
+    user_id: i64,
+    username: []const u8,
+};
+
+pub fn getUserById(id: i64) !UserModel {
+    // implementation
+}
+
+// Bad - wrong casing
+const userModel = struct {
+    UserId: i64,
+    UserName: []const u8,
+};
+
+pub fn GetUserById(id: i64) !userModel {
+    // implementation
+}
+```
+
+### Run zig fmt Before Committing
+
+```bash
+zig fmt src/
+zig fmt build.zig
+```
+
+<Note>
+Consider setting up a pre-commit hook to automatically run `zig fmt` before each commit.
+</Note>
+
+### Error Handling
+
+Always handle errors appropriately:
+
+```zig
+// Good - explicit error handling
+const user = try getUserById(123);
+
+// Also good - error propagation
+pub fn processUser(id: i64) !void {
+    const user = try getUserById(id);
+    // ... use user
+}
+
+// Bad - ignoring errors
+const user = getUserById(123) catch unreachable;
+```
+
+Only use `catch unreachable` when you're absolutely certain an error cannot occur.
+
+### Memory Management
+
+Be explicit about memory ownership:
+
+```zig
+// Good - clear allocator passing
+pub fn createUser(allocator: std.mem.Allocator, name: []const u8) !*User {
+    const user = try allocator.create(User);
+    user.name = try allocator.dupe(u8, name);
+    return user;
+}
+
+// Good - defer for cleanup
+pub fn processFile(allocator: std.mem.Allocator, path: []const u8) !void {
+    const file = try std.fs.cwd().openFile(path, .{});
+    defer file.close();
+    
+    const contents = try file.readToEndAlloc(allocator, 1024 * 1024);
+    defer allocator.free(contents);
+    
+    // process contents
+}
+```
+
+### Naming Conventions
+
+- **Variables and functions**: `snake_case`
+  - `user_id`, `book_count`, `fetchMetadata()`
+- **Types and structs**: `PascalCase`
+  - `UserModel`, `BookScanner`, `Database`
+- **Constants**: `SCREAMING_SNAKE_CASE`
+  - `MAX_BUFFER_SIZE`, `DEFAULT_PORT`
+- **File names**: `snake_case.zig`
+  - `user_model.zig`, `metadata_extractor.zig`
+
+### Documentation Comments
+
+Use doc comments (`///`) for public APIs:
+
+```zig
+/// Fetches metadata for a book using its ISBN.
+/// Returns an error if the ISBN is invalid or the API request fails.
+pub fn fetchBookMetadata(isbn: []const u8) !Metadata {
+    // implementation
+}
+```
+
+### Module Organization
+
+Dust follows a modular structure:
+
+```
+src/
+├── main.zig              # Entry point
+├── server.zig            # HTTP server setup
+├── database.zig          # Database abstraction
+├── config.zig            # Configuration handling
+├── modules/              # Feature modules
+│   ├── users/
+│   │   ├── model.zig
+│   │   ├── routes.zig
+│   │   └── migrations.zig
+│   └── books/
+│       ├── model.zig
+│       ├── routes.zig
+│       └── background_tasks.zig
+└── middleware/           # HTTP middleware
+    ├── auth.zig
+    ├── cors.zig
+    └── logging.zig
+```
+
+When adding new features:
+- Place related code in the appropriate module
+- Create a new module for substantial new features
+- Keep routes, models, and business logic separated
+
+## Testing Guidelines
+
+### Writing Tests
+
+Use Zig's built-in testing framework:
+
+```zig
+const std = @import("std");
+const testing = std.testing;
+
+test "user creation" {
+    const allocator = testing.allocator;
+    
+    const user = try createUser(allocator, "testuser");
+    defer allocator.destroy(user);
+    
+    try testing.expectEqualStrings("testuser", user.name);
+}
+```
+
+### Running Tests
+
+```bash
+# Run all tests
+zig build test
+
+# Run tests in a specific file
+zig test src/users.zig
+```
+
+### Test Coverage
+
+Aim to test:
+- New features and bug fixes
+- Edge cases and error conditions
+- Public APIs and critical paths
+
+## Pull Request Guidelines
+
+### Before Submitting
+
+<Steps>
+  <Step title="Format your code">
+    ```bash
+    zig fmt src/
+    zig fmt build.zig
+    ```
+  </Step>
+  
+  <Step title="Run tests">
+    ```bash
+    zig build test
+    ```
+  </Step>
+  
+  <Step title="Build the project">
+    ```bash
+    zig build -Doptimize=ReleaseSafe
+    ```
+  </Step>
+  
+  <Step title="Test manually">
+    Run the server and test your changes manually to ensure everything works as expected.
+  </Step>
+</Steps>
+
+### PR Description
+
+Your PR description should:
+- Explain what changes you made and why
+- Reference related issues (e.g., "Fixes #123" or "Closes #456")
+- Include screenshots for UI changes
+- List any breaking changes
+- Describe how you tested the changes
+
+### Review Process
+
+After submitting:
+1. Maintainers will review your code
+2. Address any feedback or requested changes
+3. Once approved, a maintainer will merge your PR
+4. The automated release process will handle versioning
+
+<Info>
+PRs are typically reviewed within a few days. Feel free to ping maintainers if you haven't heard back after a week.
+</Info>
+
+## Best Practices
+
+### Keep Commits Focused
+
+- Each commit should represent a single logical change
+- Don't mix refactoring with new features
+- Split large changes into multiple commits
+
+### Write Clear Commit Messages
+
+- Use the imperative mood ("add" not "added")
+- Keep the subject line under 72 characters
+- Explain "why" in the body, not "what" (the diff shows "what")
+
+### Be Respectful
+
+- Give constructive feedback
+- Assume good intentions
+- Focus on the code, not the person
+
+## Next Steps
+
+- Understand the [Release Process](/contributing/release-process)
+- Review [Getting Started](/contributing/getting-started) for the contribution workflow
+- Check out [open issues](https://github.com/dust-books/dust-server/issues) to find something to work on

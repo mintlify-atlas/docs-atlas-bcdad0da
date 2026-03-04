@@ -1,0 +1,387 @@
+---
+title: Release Process
+description: Understanding Dust's automated release workflow and versioning system
+---
+
+Dust uses semantic-release for fully automated version management and releases. This guide explains how the release process works.
+
+## Overview
+
+The release process is completely automated using [semantic-release](https://github.com/semantic-release/semantic-release). When commits are pushed to the `main` branch, the CI/CD pipeline:
+
+1. Analyzes commit messages to determine the next version
+2. Builds binaries for multiple platforms
+3. Generates release notes and updates `CHANGELOG.md`
+4. Updates `build.zig.zon` with the new version
+5. Creates a Git tag and GitHub release
+6. Publishes binary artifacts to the GitHub release
+7. Triggers the Docker build workflow
+
+<Info>
+You never need to manually create releases, tags, or update version numbers. Everything is handled automatically based on your commit messages.
+</Info>
+
+## Versioning Strategy
+
+Dust follows [Semantic Versioning](https://semver.org/) (SemVer):
+
+- **Major** (1.0.0 → 2.0.0) - Breaking changes
+- **Minor** (0.1.0 → 0.2.0) - New features (backwards compatible)
+- **Patch** (0.1.0 → 0.1.1) - Bug fixes (backwards compatible)
+
+### How Version Bumps Are Determined
+
+The version bump is determined automatically from your commit messages:
+
+| Commit Type | Example | Version Bump |
+|-------------|---------|-------------|
+| `feat:` | New feature | **Minor** (0.1.0 → 0.2.0) |
+| `fix:` | Bug fix | **Patch** (0.1.0 → 0.1.1) |
+| `perf:` | Performance improvement | **Patch** (0.1.0 → 0.1.1) |
+| `revert:` | Revert previous commit | **Patch** (0.1.0 → 0.1.1) |
+| `BREAKING CHANGE:` | Breaking change in footer | **Major** (0.1.0 → 1.0.0) |
+| `docs:`, `style:`, `refactor:`, etc. | Non-code changes | **No release** |
+
+<Warning>
+Only commits on the `main` branch trigger releases. Commits to feature branches or PRs do not trigger the release workflow.
+</Warning>
+
+## Release Workflow
+
+### Step-by-Step Process
+
+<Steps>
+  <Step title="Developer commits to main">
+    Push commits with conventional commit messages to the `main` branch:
+    
+    ```bash
+    git commit -m "feat: add book tagging support"
+    git push origin main
+    ```
+  </Step>
+  
+  <Step title="GitHub Actions runs release workflow">
+    The `.github/workflows/release.yml` workflow is triggered automatically.
+  </Step>
+  
+  <Step title="Build binaries">
+    Zig builds binaries for multiple platforms:
+    
+    - Linux x86_64
+    - Linux aarch64 (ARM64)
+    - macOS x86_64 (Intel)
+    - macOS aarch64 (Apple Silicon)
+    
+    All binaries are built with `-Doptimize=ReleaseSafe` for production use.
+  </Step>
+  
+  <Step title="Semantic-release analyzes commits">
+    The semantic-release plugin:
+    
+    - Reads commit messages since the last release
+    - Determines the next version number
+    - Generates release notes
+  </Step>
+  
+  <Step title="Update version files">
+    The `scripts/update-zig-version.js` script updates:
+    
+    - `build.zig.zon` - Sets the new version number
+    - `CHANGELOG.md` - Appends generated release notes
+  </Step>
+  
+  <Step title="Create release commit and tag">
+    Semantic-release creates a commit:
+    
+    ```
+    chore(release): 0.2.0 [skip ci]
+    
+    ## [0.2.0] - 2024-01-15
+    
+    ### Features
+    - add book tagging support
+    ```
+    
+    And creates a Git tag: `v0.2.0`
+  </Step>
+  
+  <Step title="Publish GitHub release">
+    A GitHub release is created with:
+    
+    - Release notes from the changelog
+    - Binary artifacts for all platforms
+    - Automatic comparison link to previous release
+  </Step>
+  
+  <Step title="Trigger Docker build">
+    The new tag automatically triggers the `.github/workflows/docker-build.yml` workflow, building and publishing Docker images.
+  </Step>
+</Steps>
+
+## Binary Artifacts
+
+Each GitHub release includes pre-compiled binaries:
+
+| Platform | Architecture | File |
+|----------|-------------|------|
+| Linux | x86_64 | `dust-server-linux-x86_64.tar.gz` |
+| Linux | aarch64 (ARM64) | `dust-server-linux-aarch64.tar.gz` |
+| macOS | x86_64 (Intel) | `dust-server-macos-x86_64.tar.gz` |
+| macOS | aarch64 (Apple Silicon) | `dust-server-macos-aarch64.tar.gz` |
+
+<Note>
+Windows builds are not currently supported due to POSIX-specific code (signal handling, etc.). Users on Windows should use Docker or WSL.
+</Note>
+
+## Configuration Files
+
+The release process is configured through several files:
+
+### `.releaserc.json`
+
+Main semantic-release configuration:
+
+```json
+{
+  "branches": ["main"],
+  "plugins": [
+    "@semantic-release/commit-analyzer",
+    "@semantic-release/release-notes-generator",
+    "@semantic-release/changelog",
+    "@semantic-release/exec",
+    "@semantic-release/git",
+    "@semantic-release/github"
+  ]
+}
+```
+
+**Key settings:**
+- Only releases from `main` branch
+- Uses conventional commits preset
+- Updates `CHANGELOG.md` and `build.zig.zon`
+- Creates GitHub releases with binary artifacts
+
+### `scripts/update-zig-version.js`
+
+Node.js script that updates the version in `build.zig.zon`:
+
+```javascript
+// Called by semantic-release with the new version
+// Updates: .version = "0.2.0"
+```
+
+### `.github/workflows/release.yml`
+
+GitHub Actions workflow that:
+- Builds binaries for all platforms
+- Runs semantic-release
+- Uploads artifacts to the GitHub release
+
+## Release Commit Examples
+
+### Patch Release (Bug Fix)
+
+```bash
+# Commit
+git commit -m "fix: resolve book scanner timeout on large libraries"
+
+# Results in version: 0.1.0 → 0.1.1
+# Changelog entry:
+## [0.1.1] - 2024-01-15
+
+### Bug Fixes
+- resolve book scanner timeout on large libraries
+```
+
+### Minor Release (New Feature)
+
+```bash
+# Commit
+git commit -m "feat: add support for EPUB metadata extraction"
+
+# Results in version: 0.1.1 → 0.2.0
+# Changelog entry:
+## [0.2.0] - 2024-01-16
+
+### Features
+- add support for EPUB metadata extraction
+```
+
+### Multiple Changes
+
+If multiple commits since the last release:
+
+```bash
+git commit -m "feat: add book tagging"
+git commit -m "fix: correct ISBN validation"
+git commit -m "docs: update API documentation"
+
+# Results in version: 0.2.0 → 0.3.0 (highest type wins)
+# Changelog includes all changes:
+## [0.3.0] - 2024-01-17
+
+### Features
+- add book tagging
+
+### Bug Fixes
+- correct ISBN validation
+
+### Documentation
+- update API documentation
+```
+
+### Major Release (Breaking Change)
+
+```bash
+git commit -m "feat: redesign authentication system
+
+Replaced JWT-based auth with OAuth2.
+
+BREAKING CHANGE: Old JWT tokens are no longer valid.
+All users must re-authenticate after this update."
+
+# Results in version: 0.3.0 → 1.0.0
+# Changelog highlights breaking change:
+## [1.0.0] - 2024-01-18
+
+### BREAKING CHANGES
+- Old JWT tokens are no longer valid. All users must re-authenticate.
+
+### Features
+- redesign authentication system
+```
+
+## Skipping Releases
+
+Some commits should not trigger a release:
+
+### Using Non-Release Commit Types
+
+```bash
+# These don't trigger releases:
+git commit -m "docs: update README"
+git commit -m "chore: update dependencies"
+git commit -m "ci: fix build script"
+git commit -m "style: run zig fmt"
+```
+
+### Using [skip ci]
+
+To skip the entire CI/CD workflow:
+
+```bash
+git commit -m "docs: fix typo [skip ci]"
+```
+
+<Note>
+Release commits automatically include `[skip ci]` to prevent recursive builds.
+</Note>
+
+## Testing Releases Locally
+
+You can test semantic-release locally without creating an actual release:
+
+```bash
+# Install dependencies
+npm install
+
+# Dry run to see what would be released
+npx semantic-release --dry-run
+```
+
+This shows:
+- What version would be created
+- What the changelog would contain
+- Which files would be updated
+
+<Warning>
+Don't run `npx semantic-release` without `--dry-run` locally. This could create unintended releases.
+</Warning>
+
+## Manual Releases
+
+<Warning>
+Manual releases are NOT recommended. The automated process ensures consistency and correctness.
+</Warning>
+
+If you absolutely must create a manual release:
+
+1. Update `build.zig.zon` with the new version
+2. Update `CHANGELOG.md` with release notes
+3. Commit: `git commit -m "chore(release): X.Y.Z [skip ci]"`
+4. Tag: `git tag vX.Y.Z`
+5. Push: `git push origin main --tags`
+6. Create GitHub release manually
+7. Upload binary artifacts
+
+## Troubleshooting
+
+### Release Didn't Trigger
+
+**Check commit messages:**
+- Ensure you're using conventional commit format
+- Verify commits are on `main` branch
+- Check if `[skip ci]` was accidentally included
+
+**View workflow logs:**
+- Go to GitHub Actions tab
+- Check the release workflow run
+- Review semantic-release output
+
+### Version Number Incorrect
+
+**Semantic-release determines version from:**
+1. Latest Git tag
+2. Commits since that tag
+3. Commit types (feat, fix, etc.)
+
+To fix:
+- Check that tags are correct: `git tag -l`
+- Verify commit history: `git log`
+- Review `.releaserc.json` configuration
+
+### Binary Upload Failed
+
+**Common causes:**
+- Build failed on specific platform
+- GitHub API rate limit
+- Artifact path incorrect in workflow
+
+**Check:**
+- GitHub Actions logs for build errors
+- `.github/workflows/release.yml` artifact paths
+
+## Best Practices
+
+<Steps>
+  <Step title="Use conventional commits consistently">
+    All commits should follow the conventional format, even on feature branches.
+  </Step>
+  
+  <Step title="Merge complete features">
+    Only merge to `main` when features are complete and tested. Each merge to `main` could trigger a release.
+  </Step>
+  
+  <Step title="Review commit history before merging">
+    When merging a PR, ensure commit messages are formatted correctly. Squash and reword if needed.
+  </Step>
+  
+  <Step title="Let automation handle versioning">
+    Never manually edit version numbers or tags. Trust the automated process.
+  </Step>
+</Steps>
+
+## Files Updated by Releases
+
+Each release updates:
+
+- **`build.zig.zon`** - Version field updated
+- **`CHANGELOG.md`** - Release notes appended
+- **Git tags** - New version tag created (e.g., `v0.2.0`)
+- **GitHub Releases** - Release created with notes and artifacts
+
+## Next Steps
+
+- Review [Code Style Guidelines](/contributing/code-style) for commit message format
+- Understand [Getting Started](/contributing/getting-started) for the contribution workflow
+- Check out the [Development Setup](/contributing/development-setup) guide

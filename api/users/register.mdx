@@ -1,0 +1,77 @@
+---
+title: Register User
+description: Create a new user account
+---
+
+## POST /auth/register
+
+Registers a new user account. The first user created automatically becomes an admin.
+
+If the server is configured for invitation-only mode, a valid invitation token is required.
+
+### Request Body
+
+<ParamField body="email" type="string" required>
+  User's email address. Must be unique.
+</ParamField>
+
+<ParamField body="password" type="string" required>
+  User's password. Will be hashed using bcrypt with 12 rounds.
+</ParamField>
+
+<ParamField body="username" type="string">
+  Optional username for the account. If not provided, email will be used as display name.
+</ParamField>
+
+<ParamField body="display_name" type="string">
+  Optional display name (currently not stored, use username instead).
+</ParamField>
+
+<ParamField body="invitation_token" type="string">
+  Required when server is in invitation-only mode. Obtained from an admin invitation.
+</ParamField>
+
+### Response
+
+<ResponseField name="message" type="string">
+  Success message confirming user registration.
+</ResponseField>
+
+<ResponseField name="user_id" type="integer">
+  The unique ID of the newly created user.
+</ResponseField>
+
+### Example Request
+
+```bash
+curl -X POST http://localhost:3000/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "user@example.com",
+    "password": "securePassword123",
+    "username": "johndoe"
+  }'
+```
+
+### Example Response
+
+```json
+{
+  "message": "User registered successfully",
+  "user_id": 1
+}
+```
+
+### Status Codes
+
+- `201` - User successfully registered
+- `400` - Invalid request (missing required fields, invalid JSON, or invitation token required/invalid)
+- `409` - User already exists with that email
+- `500` - Server error during registration
+
+### Notes
+
+- The first user registered automatically receives admin privileges
+- Passwords are hashed using bcrypt before storage
+- Check `/auth/settings` to determine if invitation tokens are required
+- Email addresses must be unique across all users

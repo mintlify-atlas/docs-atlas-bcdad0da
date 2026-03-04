@@ -1,0 +1,234 @@
+---
+title: Metadata Fetching
+description: Automatically enrich your library with book information from OpenLibrary
+---
+
+Dust automatically fetches rich metadata from OpenLibrary to enhance your library with complete book information, descriptions, and cover art.
+
+## How Metadata Fetching Works
+
+When Dust scans your library, it extracts basic information from filenames and directory structures. If an ISBN is detected, Dust automatically queries OpenLibrary to enrich the book with complete metadata.
+
+<Steps>
+  <Step title="ISBN Detection">
+    During scanning, Dust checks filenames for valid ISBN-10 or ISBN-13 numbers.
+  </Step>
+  
+  <Step title="OpenLibrary Query">
+    When an ISBN is found, Dust queries the OpenLibrary API to fetch comprehensive book data.
+  </Step>
+  
+  <Step title="Metadata Enrichment">
+    External metadata is merged with local data, with OpenLibrary taking precedence for fields like title, author, and description.
+  </Step>
+  
+  <Step title="Cover Download">
+    If OpenLibrary provides a cover image URL, Dust automatically downloads and stores it locally.
+  </Step>
+</Steps>
+
+## Metadata Fields
+
+Dust fetches and stores comprehensive book information:
+
+### Basic Information
+
+- **Title**: Complete book title
+- **Subtitle**: Book subtitle (if available)
+- **Author(s)**: All authors (Dust uses the first author for organization)
+- **ISBN**: The ISBN used for lookup
+
+### Publishing Details
+
+- **Publisher**: Publishing house or company
+- **Publication Date**: When the book was published
+- **Page Count**: Number of pages
+- **Language**: Publication language code
+
+### Rich Content
+
+- **Description**: Full book description or synopsis
+- **Categories/Subjects**: Genre and topic tags
+- **Cover Images**: Both large and small cover images
+
+<Info>
+All fetched metadata is stored in your local database, so subsequent loads don't require external API calls.
+</Info>
+
+## OpenLibrary Integration
+
+Dust uses OpenLibrary's Books API for metadata lookups.
+
+### Configuration
+
+Metadata fetching requires a User-Agent string in your configuration:
+
+```toml
+user_agent = "Dust/1.0 (your-email@example.com)"
+```
+
+<Note>
+OpenLibrary requires a descriptive User-Agent that includes contact information. This helps them reach out if there are any issues with your requests.
+</Note>
+
+### API Behavior
+
+- **Rate Limiting**: OpenLibrary is a free service. Dust respects their rate limits.
+- **Fallback**: If OpenLibrary is unavailable, Dust uses locally extracted metadata.
+- **Caching**: All fetched data is cached locally and never re-fetched unless you manually refresh.
+
+## Metadata Extraction Hierarchy
+
+Dust uses a smart hierarchy to determine the best metadata for each book:
+
+<Accordion title="1. OpenLibrary (Highest Priority)">
+  When an ISBN is available, OpenLibrary metadata takes precedence:
+  
+  ```zig
+  // Example: OpenLibrary provides complete data
+  {
+    "title": "The Pragmatic Programmer",
+    "authors": ["David Thomas", "Andrew Hunt"],
+    "publisher": "Addison-Wesley",
+    "publication_date": "1999",
+    "description": "Your journey to mastery...",
+    "page_count": 352
+  }
+  ```
+</Accordion>
+
+<Accordion title="2. Directory Structure">
+  When OpenLibrary isn't available, directory names provide author and title:
+  
+  ```
+  /books/David Thomas/The Pragmatic Programmer/book.epub
+  
+  → Author: "David Thomas"
+  → Title: "The Pragmatic Programmer"
+  ```
+</Accordion>
+
+<Accordion title="3. Filename Parsing">
+  As a last resort, the filename is cleaned and used as the title:
+  
+  ```
+  the-pragmatic-programmer_2nd-edition.epub
+  
+  → Title: "the pragmatic programmer 2nd edition"
+  ```
+</Accordion>
+
+## ISBN Detection
+
+Dust includes sophisticated ISBN detection that handles multiple formats:
+
+### Detection Algorithm
+
+The ISBN extractor:
+- Strips hyphens, underscores, spaces, and dots
+- Recognizes 10-digit and 13-digit sequences
+- Supports ISBN-10 with trailing 'X' check digit
+- Handles partial matches in longer filenames
+
+### Example Detections
+
+```bash
+# All of these are correctly detected:
+978-1-098-16220-7.epub          → "9781098162207"
+9781098162207 - Book Title.pdf  → "9781098162207"
+ISBN_123456789X.mobi            → "123456789X"
+978_1_098_16220_7.epub          → "9781098162207"
+```
+
+<Tip>
+For best results, place the ISBN at the beginning of the filename before other text.
+</Tip>
+
+## External Metadata Response
+
+When OpenLibrary successfully returns data, you'll see log entries like:
+
+```
+📚 Looking up ISBN 9781098162207 via OpenLibrary...
+📚 ✓ Found: "The Pragmatic Programmer" by David Thomas
+✨ Enriched metadata: "The Pragmatic Programmer" by David Thomas
+```
+
+## Handling Missing Metadata
+
+If a book doesn't have an ISBN or OpenLibrary doesn't have information:
+
+- Dust falls back to locally extracted metadata
+- You can manually edit book information through the web interface
+- Author is set to "Unknown" if it can't be determined
+- Title is derived from the filename
+
+<Note>
+Not all books have ISBN numbers, especially older publications. Dust works perfectly fine with local metadata only.
+</Note>
+
+## Manual Metadata Refresh
+
+You can manually refresh metadata for any book to:
+
+- Re-query OpenLibrary after fixing an ISBN
+- Update information after OpenLibrary's database has been updated
+- Re-download cover images
+- Update file size and format information
+
+## Metadata Accuracy
+
+### What Dust Guarantees
+
+- **File information** (size, format, path) is always accurate
+- **ISBNs** extracted from filenames are validated
+- **Cover images** are verified before storage
+
+### What Depends on OpenLibrary
+
+- Accuracy of descriptions and summaries
+- Completeness of author information
+- Publication dates and publisher names
+- Subject categorization
+
+<Info>
+OpenLibrary is community-maintained. If you find incorrect data, you can edit it directly on OpenLibrary.org, and Dust will fetch the corrected information on the next metadata refresh.
+</Info>
+
+## Privacy and External Requests
+
+Dust's metadata fetching is privacy-conscious:
+
+- Only ISBNs are sent to OpenLibrary (no personal information)
+- You can disable external lookups in the configuration
+- All metadata is cached locally
+- No analytics or tracking
+
+### Disabling External Lookups
+
+If you prefer to use only local metadata:
+
+```zig
+// In scanner initialization
+const metadata_extractor = try MetadataExtractor.init(
+    allocator,
+    false,  // disable external lookups
+    config,
+);
+```
+
+## Advanced: Genre Detection
+
+Dust includes experimental genre detection based on keywords in titles and descriptions:
+
+```zig
+const genres = try metadata_extractor.detectGenres(&metadata, file_path);
+```
+
+Supported genres include:
+- Cooking, Magic, Romance, Mystery
+- Fantasy, Sci-Fi, Horror
+- Biography, History, Self-Help
+- Technology, Science
+
+Genre detection is automatic and supplements OpenLibrary's subject tags.

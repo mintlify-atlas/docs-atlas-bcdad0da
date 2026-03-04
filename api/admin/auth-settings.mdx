@@ -1,0 +1,121 @@
+---
+title: "Auth Settings"
+description: "Get and update server authentication settings"
+---
+
+## Get Auth Settings
+
+Retrieve the current authentication flow configuration for the server.
+
+### Endpoint
+
+```
+GET /admin/auth-settings
+```
+
+### Authentication
+
+This endpoint requires admin authentication. Include a valid JWT token with admin privileges in the Authorization header.
+
+### Response
+
+<ResponseField name="auth_flow" type="string">
+  Current authentication flow mode. Possible values:
+  - `"signup"`: Open registration - anyone can create an account
+  - `"invitation"`: Invitation-only - users need an invitation token to register
+</ResponseField>
+
+### Example Request
+
+```bash
+curl -X GET http://localhost:3000/admin/auth-settings \
+  -H "Authorization: Bearer YOUR_ADMIN_JWT_TOKEN"
+```
+
+### Example Response
+
+```json
+{
+  "auth_flow": "invitation"
+}
+```
+
+---
+
+## Update Auth Settings
+
+Change the authentication flow configuration for the server.
+
+### Endpoint
+
+```
+PUT /admin/auth-settings
+```
+
+### Authentication
+
+This endpoint requires admin authentication. Include a valid JWT token with admin privileges in the Authorization header.
+
+### Request Body
+
+<ParamField body="auth_flow" type="string" required>
+  The authentication flow mode to set. Must be one of:
+  - `"signup"`: Allow open registration
+  - `"invitation"`: Require invitation tokens for registration
+</ParamField>
+
+### Response
+
+<ResponseField name="auth_flow" type="string">
+  The updated authentication flow mode
+</ResponseField>
+
+### Example Request
+
+```bash
+curl -X PUT http://localhost:3000/admin/auth-settings \
+  -H "Authorization: Bearer YOUR_ADMIN_JWT_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "auth_flow": "invitation"
+  }'
+```
+
+### Example Response
+
+```json
+{
+  "auth_flow": "invitation"
+}
+```
+
+## Authentication Flows
+
+### Signup Mode
+
+When `auth_flow` is set to `"signup"`:
+- Users can freely register accounts without an invitation
+- The registration endpoint accepts standard username/email/password credentials
+- Suitable for public or semi-public instances
+
+### Invitation Mode
+
+When `auth_flow` is set to `"invitation"`:
+- Users must have a valid invitation token to register
+- Admins generate invitation tokens via the `/admin/invitations` endpoint
+- Tokens are email-specific and expire after 24 hours
+- Suitable for private instances or controlled access scenarios
+
+## Error Responses
+
+<ResponseField name="400 Bad Request">
+  Invalid auth_flow value (must be "signup" or "invitation")
+</ResponseField>
+
+<ResponseField name="401 Unauthorized">
+  Missing or invalid authentication token
+</ResponseField>
+
+<ResponseField name="403 Forbidden">
+  User does not have admin privileges
+</ResponseField>

@@ -1,0 +1,504 @@
+---
+title: Systemd Service
+description: Install and manage Dust as a systemd service on Linux with automatic startup and monitoring
+---
+
+Running Dust as a systemd service provides automatic startup, restart on failure, and easy management through standard Linux tools.
+
+## Automated Installation
+
+The easiest way to install Dust with systemd is using the official installation script:
+
+<CodeGroup>
+```bash Interactive Mode
+# Interactive setup with prompts for configuration
+curl -fsSL https://raw.githubusercontent.com/dust-books/dust-server/main/scripts/install.sh -o /tmp/install-dust.sh
+sudo bash /tmp/install-dust.sh
+```
+
+```bash Quick Install
+# Quick install with defaults
+curl -fsSL https://raw.githubusercontent.com/dust-books/dust-server/main/scripts/install.sh | sudo bash
+```
+</CodeGroup>
+
+<Note>
+  Interactive mode lets you customize media directories and port during setup. Quick install uses defaults (`/media/books:/media/comics`, port `4001`) which you can change later in `/opt/dust/.env`.
+</Note>
+
+### What the Installer Does
+
+The installation script automatically:
+
+<Steps>
+  <Step title="Downloads the latest release">
+    Detects your system architecture (x86_64 or aarch64) and downloads the appropriate binary from GitHub releases.
+  </Step>
+  
+  <Step title="Installs runtime dependencies">
+    Installs required packages:
+    - musl (C library for statically linked binaries)
+    - SQLite is bundled with the binary
+  </Step>
+  
+  <Step title="Creates system user">
+    Creates a dedicated `dust` system user for running the service securely.
+  </Step>
+  
+  <Step title="Installs to /opt/dust">
+    Sets up the installation directory structure:
+    - `/opt/dust/dust-server` - Binary executable
+    - `/opt/dust/data/` - SQLite database directory
+    - `/opt/dust/.env` - Environment configuration
+  </Step>
+  
+  <Step title="Configures environment">
+    Generates JWT secret and creates `.env` file with your specified settings.
+  </Step>
+  
+  <Step title="Creates systemd service">
+    Installs service file at `/etc/systemd/system/dust-server.service`.
+  </Step>
+  
+  <Step title="Enables and starts service">
+    Enables automatic startup on boot and starts the service immediately.
+  </Step>
+</Steps>
+
+## Manual Installation
+
+If you prefer to install manually:
+
+<Steps>
+  <Step title="Download and extract Dust">
+    ```bash
+    # Download latest release
+    wget https://github.com/dust-books/dust-server/releases/latest/download/dust-server-linux-x86_64.tar.gz
+    
+    # Create installation directory
+    sudo mkdir -p /opt/dust/data
+    
+    # Extract binary
+    sudo tar -xzf dust-server-linux-x86_64.tar.gz -C /opt/dust/
+    sudo chmod +x /opt/dust/dust-server
+    ```
+  </Step>
+  
+  <Step title="Create system user">
+    ```bash
+    sudo useradd --system --shell /bin/bash --home /opt/dust dust
+    ```
+  </Step>
+  
+  <Step title="Configure environment">
+    Generate JWT secret:
+    ```bash
+    openssl rand -base64 32
+    ```
+    
+    Create `/opt/dust/.env`:
+    ```bash
+    sudo nano /opt/dust/.env
+    ```
+    
+    Add configuration:
+    ```bash .env
+    # REQUIRED: JWT Secret
+    JWT_SECRET=your-generated-jwt-secret-here
+    
+    # REQUIRED: Library directories (colon-separated)
+    DUST_DIRS=/media/books:/media/comics
+    
+    # Server configuration
+    PORT=4001
+    DATABASE_URL=file:/opt/dust/data/dust.db
+    
+    # Background tasks
+    SCAN_INTERVAL_MINUTES=5
+    CLEANUP_INTERVAL_MINUTES=60
+    
+    # OPTIONAL: Google Books API
+    # GOOGLE_BOOKS_API_KEY=your-api-key-here
+    ```
+  </Step>
+  
+  <Step title="Set permissions">
+    ```bash
+    sudo chown -R dust:dust /opt/dust
+    sudo chmod 600 /opt/dust/.env
+    ```
+  </Step>
+  
+  <Step title="Create systemd service file">
+    Create `/etc/systemd/system/dust-server.service`:
+    
+    ```systemd dust-server.service
+    [Unit]
+    Description=Dust Media Server
+    After=network.target
+    Documentation=https://github.com/dust-books/dust-server
+    
+    [Service]
+    Type=simple
+    User=dust
+    Group=dust
+    WorkingDirectory=/opt/dust
+    EnvironmentFile=/opt/dust/.env
+    Environment="LD_LIBRARY_PATH=/opt/dust"
+    ExecStart=/opt/dust/dust-server
+    
+    # Security hardening
+    NoNewPrivileges=true
+    PrivateTmp=true
+    ProtectSystem=strict
+    ProtectHome=true
+    ReadWritePaths=/opt/dust/data /media/books /media/comics
+    
+    # Restart configuration
+    Restart=on-failure
+    RestartSec=5s
+    
+    # Logging
+    StandardOutput=journal
+    StandardError=journal
+    SyslogIdentifier=dust-server
+    
+    [Install]
+    WantedBy=multi-user.target
+    ```
+    
+    <Note>
+      Update `ReadWritePaths` to match your `DUST_DIRS` configuration.
+    </Note>
+  </Step>
+  
+  <Step title="Enable and start service">
+    ```bash
+    sudo systemctl daemon-reload
+    sudo systemctl enable dust-server
+    sudo systemctl start dust-server
+    ```
+  </Step>
+</Steps>
+
+## Service Management
+
+### Basic Commands
+
+<CodeGroup>
+```bash Start
+# Start the service
+sudo systemctl start dust-server
+```
+
+```bash Stop
+# Stop the service
+sudo systemctl stop dust-server
+```
+
+```bash Restart
+# Restart the service
+sudo systemctl restart dust-server
+```
+
+```bash Status
+# Check service status
+sudo systemctl status dust-server
+```
+
+```bash Enable
+# Enable automatic startup on boot
+sudo systemctl enable dust-server
+```
+
+```bash Disable
+# Disable automatic startup
+sudo systemctl disable dust-server
+```
+</CodeGroup>
+
+### View Logs
+
+<CodeGroup>
+```bash Recent logs
+# Show last 50 lines
+sudo journalctl -u dust-server -n 50
+```
+
+```bash Follow logs
+# Stream logs in real-time
+sudo journalctl -u dust-server -f
+```
+
+```bash Today's logs
+# Show logs from today
+sudo journalctl -u dust-server --since today
+```
+
+```bash Date range
+# Show logs from specific date range
+sudo journalctl -u dust-server --since "2026-03-01" --until "2026-03-04"
+```
+
+```bash With priority
+# Show only errors and warnings
+sudo journalctl -u dust-server -p err..warning
+```
+</CodeGroup>
+
+## Directory Permissions
+
+The `dust` user needs read access to your media directories:
+
+<CodeGroup>
+```bash ACL Method (Recommended)
+# Add read/execute permissions using ACLs
+sudo setfacl -R -m u:dust:rX /media/books
+sudo setfacl -R -m u:dust:rX /media/comics
+
+# Make ACLs default for new files
+sudo setfacl -R -d -m u:dust:rX /media/books
+sudo setfacl -R -d -m u:dust:rX /media/comics
+```
+
+```bash Group Method
+# Add dust user to media group
+sudo usermod -aG mediagroup dust
+
+# Reload systemd to pick up new group membership
+sudo systemctl daemon-reload
+sudo systemctl restart dust-server
+```
+
+```bash Chmod Method
+# Add read permissions for all users
+sudo chmod -R +rX /media/books
+sudo chmod -R +rX /media/comics
+```
+</CodeGroup>
+
+<Warning>
+  After adding the `dust` user to new groups, you must reload systemd and restart the service for changes to take effect.
+</Warning>
+
+## Configuration Updates
+
+To update environment variables:
+
+<Steps>
+  <Step title="Edit .env file">
+    ```bash
+    sudo nano /opt/dust/.env
+    ```
+  </Step>
+  
+  <Step title="Restart service">
+    ```bash
+    sudo systemctl restart dust-server
+    ```
+    
+    <Note>
+      Configuration changes only take effect after restarting the service.
+    </Note>
+  </Step>
+  
+  <Step title="Verify changes">
+    ```bash
+    sudo systemctl status dust-server
+    sudo journalctl -u dust-server -n 20
+    ```
+  </Step>
+</Steps>
+
+## Security Hardening
+
+The systemd service includes several security features:
+
+<ParamField path="NoNewPrivileges" type="boolean" default="true">
+  Prevents the service from gaining new privileges through setuid/setgid.
+</ParamField>
+
+<ParamField path="PrivateTmp" type="boolean" default="true">
+  Creates a private /tmp directory that's isolated from the system.
+</ParamField>
+
+<ParamField path="ProtectSystem" type="string" default="strict">
+  Makes the entire file system read-only except for specified paths.
+</ParamField>
+
+<ParamField path="ProtectHome" type="boolean" default="true">
+  Makes home directories inaccessible to the service.
+</ParamField>
+
+<ParamField path="ReadWritePaths" type="string">
+  Explicitly lists directories the service can write to:
+  - `/opt/dust/data` - Database directory
+  - Your media directories (for cover downloads)
+</ParamField>
+
+## Firewall Configuration
+
+If you're using UFW, allow access to the Dust port:
+
+```bash
+# Allow Dust port
+sudo ufw allow 4001/tcp
+
+# Check firewall status
+sudo ufw status
+```
+
+For remote access:
+
+```bash
+# Allow from specific IP
+sudo ufw allow from 192.168.1.0/24 to any port 4001
+
+# Allow from anywhere (not recommended for production)
+sudo ufw allow 4001/tcp
+```
+
+## Upgrading Dust
+
+<Steps>
+  <Step title="Stop the service">
+    ```bash
+    sudo systemctl stop dust-server
+    ```
+  </Step>
+  
+  <Step title="Backup database">
+    ```bash
+    sudo cp /opt/dust/data/dust.db /opt/dust/data/dust.db.backup
+    ```
+  </Step>
+  
+  <Step title="Download new version">
+    ```bash
+    cd /tmp
+    wget https://github.com/dust-books/dust-server/releases/latest/download/dust-server-linux-x86_64.tar.gz
+    sudo tar -xzf dust-server-linux-x86_64.tar.gz -C /opt/dust/
+    sudo chmod +x /opt/dust/dust-server
+    sudo chown dust:dust /opt/dust/dust-server
+    ```
+  </Step>
+  
+  <Step title="Start the service">
+    ```bash
+    sudo systemctl start dust-server
+    ```
+  </Step>
+  
+  <Step title="Verify upgrade">
+    ```bash
+    sudo systemctl status dust-server
+    curl http://localhost:4001/health
+    ```
+  </Step>
+</Steps>
+
+<Note>
+  Or simply re-run the installation script - it automatically handles upgrades and preserves your configuration.
+</Note>
+
+## Troubleshooting
+
+### Service won't start
+
+Check logs for errors:
+```bash
+sudo journalctl -u dust-server -n 50 --no-pager
+```
+
+Common issues:
+- Missing or invalid JWT_SECRET in .env
+- Port 4001 already in use
+- Database file permissions
+- Missing runtime dependencies
+
+### Permission denied errors
+
+Verify dust user can access media directories:
+```bash
+# Test as dust user
+sudo -u dust ls -la /media/books
+
+# Check ACLs
+getfacl /media/books
+```
+
+### Service crashes on startup
+
+Check system resources:
+```bash
+# Check disk space
+df -h /opt/dust
+
+# Check memory
+free -h
+
+# Check for other services using port 4001
+sudo ss -tlnp | grep 4001
+```
+
+### Database locked errors
+
+Ensure only one instance is running:
+```bash
+sudo systemctl status dust-server
+ps aux | grep dust-server
+```
+
+If multiple processes exist:
+```bash
+sudo systemctl stop dust-server
+sudo pkill -9 dust-server
+sudo systemctl start dust-server
+```
+
+## Monitoring and Alerts
+
+Monitor service health with systemd:
+
+```bash
+# Check if service is active
+systemctl is-active dust-server
+
+# Check if service is enabled
+systemctl is-enabled dust-server
+
+# Get detailed status
+systemctl show dust-server
+```
+
+Set up email alerts for failures (requires postfix or similar):
+
+```systemd /etc/systemd/system/dust-server.service
+[Unit]
+OnFailure=status-email@%n.service
+```
+
+## Complete Installation Example
+
+Here's a complete installation from scratch:
+
+```bash
+# 1. Install with official script (interactive mode)
+curl -fsSL https://raw.githubusercontent.com/dust-books/dust-server/main/scripts/install.sh -o /tmp/install-dust.sh
+sudo bash /tmp/install-dust.sh
+
+# 2. Verify installation
+sudo systemctl status dust-server
+
+# 3. Check logs
+sudo journalctl -u dust-server -f
+
+# 4. Access web interface
+curl http://localhost:4001/health
+
+# 5. Configure firewall (if needed)
+sudo ufw allow 4001/tcp
+
+# 6. Done!
+echo "Dust is running at http://localhost:4001"
+```

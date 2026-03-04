@@ -1,0 +1,453 @@
+---
+title: Docker Deployment
+description: Deploy Dust using Docker and Docker Compose with pre-built images or custom builds
+---
+
+Dust can be deployed using Docker for easy setup and consistent environments across different systems.
+
+## Quick Start with Docker Compose
+
+The easiest way to run Dust is with Docker Compose:
+
+<Steps>
+  <Step title="Create docker-compose.yml">
+    Save this configuration to `docker-compose.yml`:
+    
+    ```yaml docker-compose.yml
+    services:
+      dust-server:
+        build:
+          context: .
+          dockerfile: Dockerfile
+        ports:
+          - "4001:4001"
+        environment:
+          - PORT=4001
+          - DATABASE_URL=file:/app/data/dust.db
+          - DUST_DIRS=/app/books  # Use : for multiple dirs
+          - JWT_SECRET=${JWT_SECRET:-}  # REQUIRED: Set in .env file
+          # - GOOGLE_BOOKS_API_KEY=your_api_key_here
+        volumes:
+          # Mount your local book directories
+          - ./books:/app/books:ro  # Read-only mount
+          # Persist database
+          - dust_data:/app/data
+        restart: unless-stopped
+        healthcheck:
+          test: ["CMD", "curl", "-f", "http://localhost:4001/health"]
+          interval: 30s
+          timeout: 10s
+          retries: 3
+          start_period: 40s
+    
+    volumes:
+      dust_data:
+        driver: local
+    ```
+  </Step>
+  
+  <Step title="Create .env file">
+    Generate your JWT secret and configure directories:
+    
+    ```bash
+    # Generate a secure JWT secret
+    openssl rand -base64 32
+    ```
+    
+    Create `.env` file:
+    ```bash .env
+    JWT_SECRET=your-generated-jwt-secret-here
+    ```
+  </Step>
+  
+  <Step title="Start the server">
+    ```bash
+    docker-compose up -d
+    ```
+  </Step>
+  
+  <Step title="Access the web interface">
+    Open your browser to `http://localhost:4001`
+  </Step>
+</Steps>
+
+## Understanding the Docker Setup
+
+### Multi-Stage Build
+
+The Dockerfile uses a multi-stage build for optimal image size:
+
+<CodeGroup>
+```dockerfile Build Stage
+# Build stage with Zig, Node.js, and build tools
+FROM alpine:3.19 AS builder
+
+# Install build dependencies
+RUN apk add --no-cache \
+    wget \
+    xz \
+    curl \
+    sqlite-dev \
+    nodejs \
+    npm
+
+# Install Zig 0.15.2
+RUN wget https://ziglang.org/download/0.15.2/zig-linux-x86_64-0.15.2.tar.xz && \
+    tar -xf zig-linux-x86_64-0.15.2.tar.xz && \
+    mv zig-linux-x86_64-0.15.2 /usr/local/zig && \
+    ln -s /usr/local/zig/zig /usr/local/bin/zig && \
+    rm zig-linux-x86_64-0.15.2.tar.xz
+
+# Build web client
+WORKDIR /app/client
+COPY client/package*.json ./
+RUN npm ci
+COPY client/ ./
+RUN npm run build
+
+# Build server
+WORKDIR /app
+COPY build.zig build.zig.zon ./
+COPY src ./src
+RUN zig build -Doptimize=ReleaseSafe
+```
+
+```dockerfile Runtime Stage
+# Minimal runtime image
+FROM alpine:3.19
+
+# Install only runtime dependencies
+RUN apk add --no-cache \
+    sqlite-libs \
+    curl
+
+# Create non-root user
+RUN addgroup -g 1000 dustapp && \
+    adduser -D -u 1000 -G dustapp dustapp
+
+WORKDIR /app
+
+# Copy built artifacts from builder
+COPY --from=builder /app/zig-out/bin/dust-server /app/dust-server
+COPY --from=builder /app/client/dist /app/client/dist
+
+# Create database directory
+RUN mkdir -p /app/data && chown -R dustapp:dustapp /app/data
+
+# Default environment
+ENV PORT=4001
+ENV DATABASE_URL=file:/app/data/dust.db
+
+EXPOSE 4001
+USER dustapp
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+  CMD curl -f http://localhost:4001/health || exit 1
+
+CMD ["/app/dust-server"]
+```
+</CodeGroup>
+
+### Volume Mounts
+
+Dust requires two types of volumes:
+
+<ParamField path="Library Volumes" type="volume" required>
+  Mount your book and comic directories as read-only volumes:
+  
+  ```yaml
+  volumes:
+    - ./books:/app/books:ro
+    - ./comics:/app/comics:ro
+    - /media/library:/app/library:ro
+  ```
+  
+  <Note>
+    The `:ro` flag mounts volumes as read-only, preventing Dust from accidentally modifying your media files.
+  </Note>
+</ParamField>
+
+<ParamField path="Data Volume" type="volume" required>
+  Persist the SQLite database:
+  
+  ```yaml
+  volumes:
+    - dust_data:/app/data
+  ```
+  
+  <Warning>
+    Without a persistent volume, your database will be lost when the container restarts.
+  </Warning>
+</ParamField>
+
+## Configuration Examples
+
+### Multiple Library Directories
+
+```yaml docker-compose.yml
+services:
+  dust-server:
+    # ... other config
+    environment:
+      - DUST_DIRS=/app/books:/app/comics:/app/manga
+    volumes:
+      - ./books:/app/books:ro
+      - ./comics:/app/comics:ro
+      - ./manga:/app/manga:ro
+      - dust_data:/app/data
+```
+
+### Custom Port
+
+```yaml docker-compose.yml
+services:
+  dust-server:
+    ports:
+      - "8080:8080"  # Host:Container
+    environment:
+      - PORT=8080
+```
+
+### With Google Books API
+
+```yaml docker-compose.yml
+services:
+  dust-server:
+    environment:
+      - GOOGLE_BOOKS_API_KEY=${GOOGLE_BOOKS_API_KEY}
+```
+
+Add to `.env`:
+```bash
+GOOGLE_BOOKS_API_KEY=your-api-key-here
+```
+
+### Custom Scan Intervals
+
+```yaml docker-compose.yml
+services:
+  dust-server:
+    environment:
+      - SCAN_INTERVAL_MINUTES=10
+      - CLEANUP_INTERVAL_MINUTES=120
+```
+
+## Docker Commands
+
+### Start Services
+
+<CodeGroup>
+```bash Foreground
+# Run in foreground (see logs)
+docker-compose up
+```
+
+```bash Background
+# Run in background (detached)
+docker-compose up -d
+```
+
+```bash Rebuild
+# Rebuild images and start
+docker-compose up -d --build
+```
+</CodeGroup>
+
+### Manage Services
+
+<CodeGroup>
+```bash Stop
+# Stop services
+docker-compose stop
+```
+
+```bash Restart
+# Restart services
+docker-compose restart
+```
+
+```bash Remove
+# Stop and remove containers
+docker-compose down
+```
+
+```bash Remove with volumes
+# Stop and remove everything including volumes
+docker-compose down -v
+```
+</CodeGroup>
+
+### View Logs
+
+<CodeGroup>
+```bash All logs
+# View all logs
+docker-compose logs
+```
+
+```bash Follow logs
+# Stream logs in real-time
+docker-compose logs -f
+```
+
+```bash Last 50 lines
+# View last 50 log lines
+docker-compose logs --tail=50
+```
+
+```bash Specific service
+# Logs for dust-server only
+docker-compose logs -f dust-server
+```
+</CodeGroup>
+
+### Inspect
+
+<CodeGroup>
+```bash Service status
+# Check service status
+docker-compose ps
+```
+
+```bash Health check
+# Check health endpoint
+curl http://localhost:4001/health
+```
+
+```bash Container shell
+# Open shell in running container
+docker-compose exec dust-server sh
+```
+</CodeGroup>
+
+## Production Deployment
+
+For production environments, consider these enhancements:
+
+### Reverse Proxy with Traefik
+
+```yaml docker-compose.yml
+services:
+  dust-server:
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.dust.rule=Host(`dust.yourdomain.com`)"
+      - "traefik.http.routers.dust.entrypoints=websecure"
+      - "traefik.http.routers.dust.tls.certresolver=letsencrypt"
+      - "traefik.http.services.dust.loadbalancer.server.port=4001"
+    networks:
+      - traefik_network
+
+networks:
+  traefik_network:
+    external: true
+```
+
+### Resource Limits
+
+```yaml docker-compose.yml
+services:
+  dust-server:
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 2G
+        reservations:
+          cpus: '1.0'
+          memory: 512M
+```
+
+### Automatic Updates with Watchtower
+
+```yaml docker-compose.yml
+services:
+  watchtower:
+    image: containrrr/watchtower
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      - WATCHTOWER_POLL_INTERVAL=86400  # Check daily
+      - WATCHTOWER_CLEANUP=true
+```
+
+## Backup and Restore
+
+### Backup Database
+
+```bash
+# Backup the database volume
+docker run --rm \
+  -v dust_dust_data:/data \
+  -v $(pwd):/backup \
+  alpine tar czf /backup/dust-backup-$(date +%Y%m%d).tar.gz -C /data .
+```
+
+### Restore Database
+
+```bash
+# Stop the service
+docker-compose stop dust-server
+
+# Restore from backup
+docker run --rm \
+  -v dust_dust_data:/data \
+  -v $(pwd):/backup \
+  alpine sh -c "rm -rf /data/* && tar xzf /backup/dust-backup-20260304.tar.gz -C /data"
+
+# Start the service
+docker-compose start dust-server
+```
+
+## Troubleshooting
+
+<Steps>
+  <Step title="Container won't start">
+    Check logs for errors:
+    ```bash
+    docker-compose logs dust-server
+    ```
+    
+    Common issues:
+    - Missing JWT_SECRET in .env
+    - Port 4001 already in use
+    - Volume mount permissions
+  </Step>
+  
+  <Step title="Can't access media files">
+    Verify volume mounts:
+    ```bash
+    docker-compose exec dust-server ls -la /app/books
+    ```
+    
+    Check permissions on host system:
+    ```bash
+    ls -la ./books
+    ```
+  </Step>
+  
+  <Step title="Database errors">
+    Ensure data volume is persistent:
+    ```bash
+    docker volume ls | grep dust_data
+    ```
+    
+    Check database file permissions:
+    ```bash
+    docker-compose exec dust-server ls -la /app/data
+    ```
+  </Step>
+  
+  <Step title="Health check failing">
+    Test health endpoint manually:
+    ```bash
+    curl http://localhost:4001/health
+    ```
+    
+    Check if the server is listening:
+    ```bash
+    docker-compose exec dust-server netstat -tlnp
+    ```
+  </Step>
+</Steps>

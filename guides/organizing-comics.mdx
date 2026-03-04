@@ -1,0 +1,329 @@
+---
+title: Organizing Comics
+description: Learn how to structure and organize your comic book collection in Dust for easy browsing by publisher, series, and issue
+---
+
+## Folder Structure
+
+Dust supports comic book organization with a publisher-based structure. This allows you to browse comics by publisher, series, and issue number.
+
+### Recommended Structure
+
+```
+/media/comics/
+├── Marvel/
+│   └── Iron Man/
+│       └── 44/
+│           ├── iron_man_44.pdf
+│           └── iron_man_44_cover.jpg
+└── DC Comics/
+    └── Batman/
+        └── 01/
+            ├── batman_01.cbz
+            └── cover.jpg
+```
+
+<Steps>
+  <Step title="Create publisher folders">
+    Organize comics by publisher name. Use the official publisher name for consistency.
+    
+    ```
+    /media/comics/Marvel/
+    /media/comics/DC Comics/
+    /media/comics/Image Comics/
+    ```
+  </Step>
+
+  <Step title="Create series folders">
+    Inside each publisher folder, create folders for comic series.
+    
+    ```
+    /media/comics/Marvel/Iron Man/
+    /media/comics/Marvel/Spider-Man/
+    /media/comics/DC Comics/Batman/
+    ```
+  </Step>
+
+  <Step title="Create issue folders">
+    Inside each series folder, create numbered folders for individual issues.
+    
+    ```
+    /media/comics/Marvel/Iron Man/44/
+    /media/comics/Marvel/Iron Man/45/
+    /media/comics/DC Comics/Batman/01/
+    ```
+  </Step>
+
+  <Step title="Add comic files">
+    Place the comic file inside the issue folder. Supported formats include:
+    - CBZ (`.cbz`) - Comic Book Archive (ZIP)
+    - CBR (`.cbr`) - Comic Book Archive (RAR)
+    - PDF (`.pdf`)
+    
+    ```
+    /media/comics/Marvel/Iron Man/44/iron_man_44.pdf
+    ```
+  </Step>
+
+  <Step title="Add cover images (optional)">
+    Include cover images for better visual browsing.
+    
+    ```
+    /media/comics/Marvel/Iron Man/44/iron_man_44_cover.jpg
+    ```
+  </Step>
+</Steps>
+
+## Supported Comic Formats
+
+Dust supports the following comic book formats:
+
+<CardGroup cols={3}>
+  <Card title="CBZ" icon="file-zipper">
+    **Comic Book ZIP**
+    
+    ZIP archives containing image files. The most common digital comic format.
+  </Card>
+
+  <Card title="CBR" icon="file-zipper">
+    **Comic Book RAR**
+    
+    RAR archives containing image files. Widely used for comic distribution.
+  </Card>
+
+  <Card title="PDF" icon="file-pdf">
+    **PDF**
+    
+    Standard PDF documents. Works well for collected editions and graphic novels.
+  </Card>
+</CardGroup>
+
+## Cover Image Detection
+
+Just like with books, Dust automatically detects cover images for comics. Place cover images in the same folder as the comic file.
+
+### Recognized Patterns
+
+- `cover.jpg`, `cover.png`, `cover.jpeg`, `cover.webp`
+- `folder.jpg`, `folder.png`
+- Files ending with `_cover` (e.g., `iron_man_44_cover.jpg`)
+
+<Tip>
+For CBZ and CBR files, Dust can extract the first page as a cover if no external cover image is provided.
+</Tip>
+
+## Organization Best Practices
+
+### Publisher Names
+
+Use official publisher names for consistency:
+
+- **Marvel** (not "Marvel Comics")
+- **DC Comics** (not "DC")
+- **Image Comics**
+- **Dark Horse Comics**
+- **IDW Publishing**
+
+### Series Organization
+
+<CardGroup cols={2}>
+  <Card title="Main series" icon="book">
+    Use the primary series name without year or volume information:
+    ```
+    /media/comics/Marvel/Spider-Man/
+    ```
+  </Card>
+
+  <Card title="Volume separation" icon="books">
+    For different volumes, include volume information in the series name:
+    ```
+    /media/comics/Marvel/Spider-Man Vol 1/
+    /media/comics/Marvel/Spider-Man Vol 2/
+    ```
+  </Card>
+</CardGroup>
+
+### Issue Numbering
+
+<Steps>
+  <Step title="Use zero-padding">
+    Pad issue numbers with leading zeros for proper sorting:
+    ```
+    01, 02, 03, ... 99, 100
+    ```
+    
+    This ensures issues appear in the correct order.
+  </Step>
+
+  <Step title="Special issues">
+    For annuals and special issues, use descriptive names:
+    ```
+    /media/comics/Marvel/Spider-Man/Annual 01/
+    /media/comics/Marvel/Spider-Man/Special 2023/
+    ```
+  </Step>
+
+  <Step title="One-shots">
+    For standalone one-shot comics, you can skip the issue number:
+    ```
+    /media/comics/Marvel/Spider-Man/One-Shot - Life Story/
+    ```
+  </Step>
+</Steps>
+
+## Metadata for Comics
+
+### Automatic Detection
+
+Dust extracts metadata from your folder structure:
+
+- **Publisher**: From the top-level folder name
+- **Series**: From the series folder name
+- **Issue Number**: From the issue folder name
+- **File Format**: Automatically detected from the file extension
+
+### File Naming
+
+While folder structure provides most metadata, descriptive filenames help with identification:
+
+```
+Good: amazing_spider_man_001.cbz
+Better: amazing_spider_man_001_first_appearance.cbz
+```
+
+<Note>
+Unlike books, comics don't typically use ISBN-based metadata fetching. Metadata is primarily derived from your folder organization.
+</Note>
+
+## Collections and Story Arcs
+
+For multi-issue story arcs or collected editions:
+
+### Trade Paperbacks
+
+```
+/media/comics/Marvel/Collections/
+├── Civil War/
+│   ├── civil_war_tpb.pdf
+│   └── cover.jpg
+└── Infinity Gauntlet/
+    ├── infinity_gauntlet_complete.cbz
+    └── cover.jpg
+```
+
+### Story Arcs
+
+You can use tags (feature coming soon) to group related issues across different series:
+
+- Create a tag: "Civil War"
+- Apply to all related issues
+- Filter by tag to see the complete story arc
+
+## Advanced Organization
+
+### Multiple Publishers
+
+Keep each publisher's catalog separate:
+
+```
+/media/comics/
+├── Marvel/
+├── DC Comics/
+├── Image Comics/
+├── Dark Horse/
+└── Independent/
+```
+
+### Manga Collections
+
+For manga, you can use the publisher/series/volume structure:
+
+```
+/media/comics/
+└── Viz Media/
+    └── One Piece/
+        ├── Vol 01/
+        ├── Vol 02/
+        └── Vol 03/
+```
+
+<Warning>
+Right-to-left reading order for manga is not yet supported in Dust. This feature is planned for a future release.
+</Warning>
+
+## Reading Comics in Dust
+
+Comics are read using the same reader interface as books:
+
+<Steps>
+  <Step title="Select a comic">
+    Browse your comics library and click on a comic to open it
+  </Step>
+
+  <Step title="Use the reader">
+    PDF and CBZ/CBR files open in the built-in reader with page-by-page navigation
+  </Step>
+
+  <Step title="Navigation controls">
+    Use the previous/next buttons or keyboard arrows to navigate between pages
+  </Step>
+
+  <Step title="Reading progress">
+    Your reading position is automatically saved and synced across devices
+  </Step>
+</Steps>
+
+### Reader Settings
+
+For PDF comics, you can adjust:
+
+- **Zoom level**: Fit to width or custom zoom
+- **Page navigation**: Single page or continuous scroll
+- **Theme**: Light or dark reading mode
+
+## Library Scanning
+
+Comics are scanned using the same process as books. Dust monitors your `/media/comics` directory (if configured) and automatically detects new additions.
+
+### Configuring Comic Directories
+
+Add your comics directory to the `DUST_DIRS` environment variable:
+
+```bash
+DUST_DIRS="/media/books:/media/comics"
+```
+
+You can specify multiple directories separated by colons.
+
+<Tip>
+Store books and comics in separate directories for easier organization and filtering.
+</Tip>
+
+## Troubleshooting
+
+### Comics Not Detected
+
+If your comics aren't appearing:
+
+1. **Check file extensions**: Ensure files use `.cbz`, `.cbr`, or `.pdf` extensions
+2. **Verify folder structure**: Use the publisher/series/issue hierarchy
+3. **Check directory configuration**: Confirm your comics path is in `DUST_DIRS`
+4. **Trigger manual scan**: Use the admin panel to scan your library
+
+### Reading Issues
+
+If comics won't open or display incorrectly:
+
+1. **Verify file integrity**: Ensure CBZ/CBR files aren't corrupted
+2. **Check image formats**: CBZ/CBR should contain standard image files (JPG, PNG)
+3. **Browser compatibility**: Some older browsers may have issues with certain formats
+4. **File size**: Very large files may take longer to load
+
+### Organization Problems
+
+If your comics are disorganized:
+
+1. **Standardize naming**: Use consistent publisher and series names
+2. **Fix issue numbering**: Use zero-padded numbers for proper sorting
+3. **Separate volumes**: Create distinct folders for different volumes
+4. **Rescan library**: After reorganizing, trigger a fresh library scan

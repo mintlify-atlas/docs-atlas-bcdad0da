@@ -1,0 +1,347 @@
+---
+title: Development Setup
+description: Set up your local development environment for contributing to Dust
+---
+
+This guide will walk you through setting up a complete development environment for Dust.
+
+## Prerequisites
+
+Dust is built with Zig and uses Node.js for release automation. You'll need:
+
+- **Zig 0.15.2** (exact version required)
+- **Node.js 18+** (for semantic-release and development tools)
+- **Git** for version control
+- **SQLite** (bundled with the Zig dependency)
+
+<Note>
+Dust requires exactly Zig 0.15.2 as specified in `build.zig.zon`. Using a different version may cause compilation errors.
+</Note>
+
+## Installing Zig
+
+### Linux/macOS
+
+<Steps>
+  <Step title="Download Zig 0.15.2">
+    Visit the [Zig downloads page](https://ziglang.org/download/) and download version 0.15.2 for your platform.
+  </Step>
+  
+  <Step title="Extract and add to PATH">
+    ```bash
+    # Extract the archive
+    tar -xf zig-linux-x86_64-0.15.2.tar.xz
+    
+    # Move to a permanent location
+    sudo mv zig-linux-x86_64-0.15.2 /usr/local/zig
+    
+    # Add to PATH (add to ~/.bashrc or ~/.zshrc)
+    export PATH="/usr/local/zig:$PATH"
+    ```
+  </Step>
+  
+  <Step title="Verify installation">
+    ```bash
+    zig version
+    # Should output: 0.15.2
+    ```
+  </Step>
+</Steps>
+
+### Using Version Managers
+
+Alternatively, use a Zig version manager:
+
+```bash
+# Using zigup
+curl -fsSL https://raw.githubusercontent.com/marler8997/zigup/master/install | sh
+zigup 0.15.2
+
+# Using asdf
+asdf plugin add zig
+asdf install zig 0.15.2
+asdf local zig 0.15.2
+```
+
+## Installing Node.js
+
+Node.js is required for the release automation and development tools.
+
+### Using a Version Manager (Recommended)
+
+```bash
+# Using nvm
+curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.0/install.sh | bash
+nvm install 18
+nvm use 18
+
+# Using asdf
+asdf plugin add nodejs
+asdf install nodejs 18.20.0
+asdf local nodejs 18.20.0
+```
+
+### Verify Installation
+
+```bash
+node --version  # Should be 18.x or higher
+npm --version
+```
+
+## Cloning the Repository
+
+<Steps>
+  <Step title="Fork the repository">
+    Go to [github.com/dust-books/dust-server](https://github.com/dust-books/dust-server) and click the "Fork" button.
+  </Step>
+  
+  <Step title="Clone your fork">
+    ```bash
+    git clone https://github.com/YOUR_USERNAME/dust-server.git
+    cd dust-server
+    ```
+  </Step>
+  
+  <Step title="Add upstream remote">
+    ```bash
+    git remote add upstream https://github.com/dust-books/dust-server.git
+    ```
+  </Step>
+</Steps>
+
+## Installing Dependencies
+
+### Zig Dependencies
+
+Zig dependencies are managed through `build.zig.zon` and fetched automatically during build:
+
+- **httpz** - HTTP server framework
+- **sqlite** - SQLite database bindings
+
+No manual installation needed - Zig's build system handles this.
+
+### Node.js Dependencies
+
+Install Node.js dependencies for release automation:
+
+```bash
+npm install
+```
+
+This installs:
+- `semantic-release` - Automated version management and releases
+- `@semantic-release/changelog` - Changelog generation
+- `@semantic-release/git` - Git integration
+- `@semantic-release/exec` - Version update scripts
+
+## Building the Project
+
+### Debug Build
+
+For development with debug symbols and safety checks:
+
+```bash
+zig build
+```
+
+The binary will be at `./zig-out/bin/dust-server`.
+
+### Release Build
+
+For production-like builds with optimizations:
+
+```bash
+zig build -Doptimize=ReleaseSafe
+```
+
+<Info>
+`ReleaseSafe` includes runtime safety checks while optimizing for performance. This is the same optimization level used for official releases.
+</Info>
+
+### Build Options
+
+The `build.zig` file defines these build steps:
+
+- `zig build` - Build the server (default)
+- `zig build run` - Build and run the server
+- `zig build test` - Run the test suite
+
+## Running Tests
+
+Run the test suite to ensure everything works:
+
+```bash
+zig build test
+```
+
+This runs all unit tests defined in the codebase using the custom test runner at `test_runner.zig`.
+
+<Note>
+Tests use a custom test runner that integrates with Zig's testing framework. Test output includes detailed stack traces for failures.
+</Note>
+
+## Setting Up Environment Variables
+
+Create a `.env` file in the project root:
+
+```bash
+# Generate a secure JWT secret
+export JWT_SECRET=$(openssl rand -base64 32)
+
+# Set directories to scan for books (colon-separated)
+export DUST_DIRS="/path/to/books:/path/to/comics"
+
+# Optional: customize port
+export PORT=4001
+
+# Optional: database location
+export DATABASE_URL="file:./dust.db"
+
+# Optional: scan intervals
+export SCAN_INTERVAL_MINUTES=5
+export CLEANUP_INTERVAL_MINUTES=60
+
+# Optional: Google Books API for metadata
+export GOOGLE_BOOKS_API_KEY="your-api-key"
+```
+
+Source the file before running:
+
+```bash
+source .env
+./zig-out/bin/dust-server
+```
+
+<Warning>
+Never commit your `.env` file to version control. It should be in `.gitignore`.
+</Warning>
+
+## Running the Server
+
+### Using zig build
+
+```bash
+zig build run
+```
+
+### Running the binary directly
+
+```bash
+# Build first
+zig build
+
+# Set environment variables
+export JWT_SECRET=$(openssl rand -base64 32)
+export DUST_DIRS="/path/to/test/books"
+
+# Run
+./zig-out/bin/dust-server
+```
+
+### Passing Arguments
+
+```bash
+# Show version
+./zig-out/bin/dust-server --version
+
+# Show help
+./zig-out/bin/dust-server --help
+```
+
+## Development Workflow
+
+<Steps>
+  <Step title="Create a feature branch">
+    ```bash
+    git checkout -b feat/your-feature-name
+    ```
+  </Step>
+  
+  <Step title="Make changes and test">
+    Edit code, then build and test:
+    ```bash
+    zig build test
+    zig build run
+    ```
+  </Step>
+  
+  <Step title="Commit with conventional commits">
+    ```bash
+    git add .
+    git commit -m "feat: add new feature"
+    ```
+  </Step>
+  
+  <Step title="Keep your fork up to date">
+    ```bash
+    git fetch upstream
+    git rebase upstream/main
+    ```
+  </Step>
+  
+  <Step title="Push and create PR">
+    ```bash
+    git push origin feat/your-feature-name
+    ```
+    Then create a Pull Request on GitHub.
+  </Step>
+</Steps>
+
+## Troubleshooting
+
+### Build Errors
+
+**Error: Zig version mismatch**
+```
+error: zig version must be 0.15.2
+```
+Make sure you're using exactly Zig 0.15.2:
+```bash
+zig version
+```
+
+**Error: Cannot find module 'httpz' or 'sqlite'**
+
+Zig should fetch dependencies automatically. Try:
+```bash
+rm -rf ~/.cache/zig  # Clear Zig cache
+zig build
+```
+
+### Runtime Errors
+
+**Error: JWT_SECRET not set**
+
+Ensure you've set the required environment variable:
+```bash
+export JWT_SECRET=$(openssl rand -base64 32)
+```
+
+**Error: Cannot open database**
+
+Check that the directory for `DATABASE_URL` exists and is writable.
+
+## IDE Setup
+
+### VS Code
+
+Install the [Zig extension](https://marketplace.visualstudio.com/items?itemName=ziglang.vscode-zig):
+
+```json
+// .vscode/settings.json
+{
+  "zig.buildOnSave": true,
+  "zig.path": "/usr/local/zig/zig",
+  "zig.zls.path": "/path/to/zls"
+}
+```
+
+### Neovim/Vim
+
+Use the [zig.vim](https://github.com/ziglang/zig.vim) plugin and configure with LSP support.
+
+## Next Steps
+
+- Learn about [Code Style Guidelines](/contributing/code-style)
+- Understand the [Release Process](/contributing/release-process)
+- Browse [open issues](https://github.com/dust-books/dust-server/issues) to find something to work on

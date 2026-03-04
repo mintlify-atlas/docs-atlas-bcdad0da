@@ -1,0 +1,139 @@
+---
+title: 'API Introduction'
+description: 'Getting started with the Dust REST API for programmatic access to your media library'
+---
+
+## Overview
+
+The Dust API provides RESTful endpoints for managing your self-hosted ebook and comic library. All endpoints return JSON responses and follow standard HTTP conventions for status codes and methods.
+
+## Base URL
+
+The API runs on your self-hosted Dust server. By default, the server listens on port 8080:
+
+```
+http://localhost:8080
+```
+
+For production deployments, configure your base URL according to your server's address:
+
+```
+https://your-domain.com
+```
+
+<Info>
+The server binds to `0.0.0.0` to accept connections from all network interfaces.
+</Info>
+
+## Response Format
+
+All API responses are returned in JSON format with appropriate HTTP status codes.
+
+### Success Response
+
+```json
+{
+  "status": "ok",
+  "data": {
+    // Response data
+  }
+}
+```
+
+### Error Response
+
+```json
+{
+  "error": "Error message describing what went wrong",
+  "message": "Detailed error information"
+}
+```
+
+## HTTP Status Codes
+
+The API uses standard HTTP status codes:
+
+| Code | Description |
+|------|-------------|
+| `200` | Success - Request completed successfully |
+| `201` | Created - Resource created successfully |
+| `400` | Bad Request - Invalid request parameters |
+| `401` | Unauthorized - Missing or invalid authentication |
+| `403` | Forbidden - Insufficient permissions |
+| `404` | Not Found - Resource does not exist |
+| `409` | Conflict - Resource already exists |
+| `500` | Internal Server Error - Server encountered an error |
+
+## CORS Configuration
+
+The server includes CORS middleware configured for the following origins:
+
+- `https://client.dustbooks.org`
+- `http://localhost:3000`
+- `http://localhost:5173`
+
+<Note>
+CORS is configured to allow credentials and supports common HTTP methods: GET, POST, PUT, PATCH, DELETE, OPTIONS.
+</Note>
+
+## Available Endpoints
+
+The API is organized into several modules:
+
+### Authentication
+- `/auth/register` - Register new users
+- `/auth/login` - Authenticate and receive JWT token
+- `/auth/logout` - Invalidate session
+- `/auth/settings` - Get authentication configuration
+
+### Books
+- `/books` - List all books with pagination
+- `/books/:id` - Get book details
+- `/books/:id/stream` - Stream book content
+- `/covers/:id` - Get book cover image
+
+### Authors
+- `/books/authors` - List all authors
+- `/books/authors/:id` - Get author details
+
+### Reading Progress
+- `/books/:id/progress` - Get/update reading progress
+- `/reading/currently-reading` - Get currently reading books
+- `/reading/completed` - Get completed books
+
+### Tags
+- `/tags` - List all tags
+- `/tags/categories/:category` - Get tags by category
+- `/books/:id/tags` - Add/remove tags from books
+
+### Admin
+- `/admin/users` - User management
+- `/admin/auth-settings` - Authentication settings
+- `/admin/scan` - Scan library for new content
+- `/admin/books/:id/refresh-metadata` - Refresh book metadata
+
+<Warning>
+Admin endpoints require admin role. The first registered user automatically receives admin privileges.
+</Warning>
+
+## Health Check
+
+Check if the server is running:
+
+```bash
+curl http://localhost:8080/health
+```
+
+```json
+{
+  "status": "ok",
+  "version": "0.1.0",
+  "service": "dust-server"
+}
+```
+
+## Next Steps
+
+<Card title="Authentication" icon="key" href="/api/authentication">
+  Learn how to authenticate with JWT tokens
+</Card>

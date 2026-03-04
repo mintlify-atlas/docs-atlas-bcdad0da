@@ -1,0 +1,116 @@
+---
+title: "Scan Library"
+description: "Trigger a full library scan to discover new books and comics"
+---
+
+## Endpoint
+
+```
+POST /admin/scan
+```
+
+## Authentication
+
+This endpoint requires admin authentication. Include a valid JWT token with admin privileges in the Authorization header.
+
+## Description
+
+Initiates a full scan of all configured library directories to discover new ebooks and comics. The scanner will:
+
+- Traverse all directories specified in the `DUST_DIRS` environment variable
+- Detect supported file formats (EPUB, PDF, CBZ, CBR, etc.)
+- Extract metadata from discovered files
+- Add new books to the database
+- Update metadata for existing books if files have changed
+
+## Request Body
+
+No request body is required.
+
+## Response
+
+<ResponseField name="success" type="boolean">
+  Whether the scan completed successfully
+</ResponseField>
+
+<ResponseField name="message" type="string">
+  Status message
+</ResponseField>
+
+<ResponseField name="results" type="object">
+  Scan statistics
+  
+  <ResponseField name="books_found" type="integer">
+    Total number of book files discovered during the scan
+  </ResponseField>
+  
+  <ResponseField name="books_added" type="integer">
+    Number of new books added to the database
+  </ResponseField>
+  
+  <ResponseField name="books_updated" type="integer">
+    Number of existing books with updated metadata
+  </ResponseField>
+  
+  <ResponseField name="errors" type="integer">
+    Number of errors encountered during the scan
+  </ResponseField>
+  
+  <ResponseField name="directories_scanned" type="integer">
+    Number of directories scanned
+  </ResponseField>
+</ResponseField>
+
+## Example Request
+
+```bash
+curl -X POST http://localhost:3000/admin/scan \
+  -H "Authorization: Bearer YOUR_ADMIN_JWT_TOKEN"
+```
+
+## Example Response
+
+```json
+{
+  "success": true,
+  "message": "Library scan completed",
+  "results": {
+    "books_found": 142,
+    "books_added": 15,
+    "books_updated": 3,
+    "errors": 0,
+    "directories_scanned": 2
+  }
+}
+```
+
+## Configuration
+
+The scanner uses library directories configured via the `DUST_DIRS` environment variable. For example:
+
+```bash
+DUST_DIRS="/media/books,/media/comics"
+```
+
+If no library directories are configured, the endpoint will return a 400 error.
+
+## Error Responses
+
+<ResponseField name="400 Bad Request">
+  No library directories configured. Set the `DUST_DIRS` environment variable.
+</ResponseField>
+
+<ResponseField name="401 Unauthorized">
+  Missing or invalid authentication token
+</ResponseField>
+
+<ResponseField name="403 Forbidden">
+  User does not have admin privileges
+</ResponseField>
+
+## Notes
+
+- Library scans can take several minutes depending on the number of files
+- The scan runs synchronously and will block until complete
+- Errors are logged but don't halt the entire scan process
+- Each directory is scanned independently - if one fails, others will still complete

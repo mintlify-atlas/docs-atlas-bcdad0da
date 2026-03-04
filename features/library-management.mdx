@@ -1,0 +1,179 @@
+---
+title: Library Management
+description: Automatically scan, organize, and manage your ebook and comic collection
+---
+
+Dust's library management system automatically discovers and organizes your media files, making it easy to build and maintain your digital library.
+
+## How Library Scanning Works
+
+Dust scans directories on your server to discover ebooks and comics. The scanner walks through your file system, identifies supported formats, and automatically imports them into your library.
+
+### Supported File Formats
+
+Dust supports a wide range of ebook and comic formats:
+
+- **Ebooks**: EPUB, PDF, MOBI, AZW, AZW3
+- **Comics**: CBZ, CBR
+- **Documents**: DJVU
+
+<Info>
+File extensions are case-insensitive, so both `.epub` and `.EPUB` files will be recognized.
+</Info>
+
+## Setting Up Your Library
+
+<Steps>
+  <Step title="Configure library paths">
+    Set the path to your media collection in your Dust configuration. This is the root directory where Dust will look for files.
+    
+    ```bash
+    # Example library structure
+    /library/books/
+    ├── Author Name/
+    │   ├── Book Title/
+    │   │   └── book.epub
+    │   └── another-book.pdf
+    └── Another Author/
+        └── their-book.mobi
+    ```
+  </Step>
+  
+  <Step title="Run your first scan">
+    Trigger a library scan through the web interface or API. Dust will recursively walk through all subdirectories.
+  </Step>
+  
+  <Step title="Review imported books">
+    Once the scan completes, you'll see a summary showing:
+    - Books found
+    - Books added
+    - Books updated
+    - Any errors encountered
+  </Step>
+</Steps>
+
+## Organizing Your Files
+
+Dust intelligently extracts metadata from your file organization. For best results, organize your library using one of these patterns:
+
+### Recommended Directory Structures
+
+<Accordion title="Three-level structure (Recommended)">
+  ```
+  /books/Author Name/Book Title/file.epub
+  ```
+  
+  This structure provides the best metadata extraction:
+  - Author name is extracted from the second-level directory
+  - Book title is extracted from the third-level directory
+  - Dust will also search for cover images in the book's directory
+</Accordion>
+
+<Accordion title="Two-level structure">
+  ```
+  /books/Author Name/book-title.epub
+  ```
+  
+  In this structure:
+  - Author name comes from the directory
+  - Book title is extracted from the filename (with special characters converted to spaces)
+</Accordion>
+
+<Accordion title="Flat structure with ISBN">
+  ```
+  /books/978-1-098-16220-7.epub
+  ```
+  
+  When ISBNs are detected in filenames, Dust will:
+  - Extract the ISBN (both ISBN-10 and ISBN-13 supported)
+  - Automatically fetch complete metadata from OpenLibrary
+  - Download cover art
+</Accordion>
+
+<Tip>
+Include ISBNs in your filenames for the richest metadata. Dust supports ISBNs with hyphens, underscores, spaces, or no separators.
+</Tip>
+
+## ISBN Detection
+
+Dust automatically detects ISBNs in filenames to enable enhanced metadata fetching:
+
+### Supported ISBN Formats
+
+- **ISBN-13**: `9781098162207` or `978-1-098-16220-7`
+- **ISBN-10**: `123456789X` or `1-234-56789-X`
+
+Example filenames that work:
+```
+978-1-098-16220-7 - The Developer.pdf
+9781098162207.epub
+Book_Title_123456789X.mobi
+```
+
+## Incremental Scanning
+
+When you run a scan on an existing library:
+
+- **New files** are added to the database
+- **Existing files** have their file size and timestamps updated
+- **Missing files** remain in the database (use the archive feature to manage these)
+
+<Note>
+Dust never automatically deletes books from your database, even if the files are no longer present on disk.
+</Note>
+
+## Managing Your Library
+
+### Archiving Books
+
+Instead of deleting books, you can archive them. This is useful when:
+- You've moved files to different storage
+- You want to hide books without losing reading progress
+- You're reorganizing your library
+
+Archived books are hidden from your main library view but remain in the database with all their metadata and reading progress intact.
+
+### Refreshing Metadata
+
+You can manually refresh metadata for individual books to:
+- Update file size after replacing a file
+- Re-fetch metadata from external sources
+- Update cover art
+- Re-scan ISBN information
+
+## Scan Results
+
+After each scan, you'll receive a detailed summary:
+
+```json
+{
+  "books_found": 127,
+  "books_added": 8,
+  "books_updated": 119,
+  "errors": 0,
+  "scan_path": "/library/books"
+}
+```
+
+- **books_found**: Total number of supported files discovered
+- **books_added**: New books added to your library
+- **books_updated**: Existing books that were refreshed
+- **errors**: Files that couldn't be processed
+
+## Best Practices
+
+<Tip>
+**Keep your library organized**: Use consistent naming patterns and directory structures for best results.
+</Tip>
+
+<Tip>
+**Include ISBNs when possible**: This enables automatic metadata enrichment and cover downloads.
+</Tip>
+
+<Tip>
+**Run scans regularly**: Set up periodic scans to automatically discover new additions to your collection.
+</Tip>
+
+<Tip>
+**Use archives instead of deleting**: Preserve your reading history by archiving books instead of removing them.
+</Tip>

@@ -1,0 +1,466 @@
+---
+title: Admin Panel
+description: Learn how to use Dust's admin panel to manage your server, users, library scanning, and system settings
+---
+
+## Accessing the Admin Panel
+
+The admin panel is available to users with administrator permissions. This is where you manage your Dust server, users, and library settings.
+
+<Steps>
+  <Step title="Log in as admin">
+    Ensure you're logged in with an account that has admin privileges
+  </Step>
+
+  <Step title="Navigate to admin">
+    Click the "Admin" option in the sidebar navigation
+  </Step>
+
+  <Step title="View dashboard">
+    The admin dashboard displays an overview of your server configuration
+  </Step>
+</Steps>
+
+<Warning>
+The admin panel provides powerful controls over your Dust server. Be careful when making changes to system settings or user permissions.
+</Warning>
+
+## Admin Dashboard
+
+The admin dashboard provides quick access to key management features:
+
+<CardGroup cols={2}>
+  <Card title="Server Management" icon="server">
+    Manage multiple Dust servers and switch between them
+  </Card>
+
+  <Card title="User Management" icon="users">
+    Create, edit, and manage user accounts and permissions
+  </Card>
+
+  <Card title="Library Management" icon="books">
+    Trigger library scans and manage your book collection
+  </Card>
+
+  <Card title="System Settings" icon="gear">
+    Configure server settings and system preferences
+  </Card>
+</CardGroup>
+
+## Server Management
+
+Dust supports connecting to multiple servers, allowing you to manage different book collections or share access across multiple instances.
+
+### Connected Servers
+
+View all servers you've configured:
+
+- **Server name**: Friendly name for the server
+- **Base URL**: Server address
+- **Status**: Online/Offline/Active
+- **User**: Currently logged-in account
+
+### Adding a New Server
+
+<Steps>
+  <Step title="Click 'Add New Server'">
+    From the admin dashboard, click the "Add New Server" button
+  </Step>
+
+  <Step title="Enter server details">
+    Provide the server URL and a friendly name:
+    ```
+    Name: Home Library
+    URL: http://192.168.1.100:4001
+    ```
+  </Step>
+
+  <Step title="Authenticate">
+    Log in with your credentials for that server
+  </Step>
+
+  <Step title="Switch servers">
+    Use the server list to switch between different Dust instances
+  </Step>
+</Steps>
+
+<Tip>
+You can connect to local servers (on your network) and remote servers (accessed over the internet) using the same interface.
+</Tip>
+
+## User Management
+
+Manage user accounts and permissions for your Dust server.
+
+### User List
+
+View all registered users with:
+- Username and email
+- Role and permissions
+- Registration date
+- Last login time
+- Account status (active/suspended)
+
+### Creating Users
+
+<Steps>
+  <Step title="Navigate to user management">
+    Click "User Management" from the admin dashboard
+  </Step>
+
+  <Step title="Click 'Create User'">
+    Select the option to create a new user account
+  </Step>
+
+  <Step title="Enter user details">
+    Fill in the required information:
+    - Username
+    - Email address
+    - Password
+    - Role (Admin/User/Guest)
+  </Step>
+
+  <Step title="Set permissions">
+    Configure specific permissions for the user
+  </Step>
+
+  <Step title="Save and notify">
+    Create the account and optionally send login details to the user
+  </Step>
+</Steps>
+
+### User Roles
+
+Dust supports role-based access control:
+
+<Tabs>
+  <Tab title="Administrator">
+    **Full Access**
+    
+    - All user permissions
+    - User management
+    - System settings
+    - Library scanning
+    - Metadata management
+    - Server configuration
+  </Tab>
+
+  <Tab title="User">
+    **Standard Access**
+    
+    - Browse library
+    - Read books
+    - Track reading progress
+    - Add tags to books
+    - View own profile
+  </Tab>
+
+  <Tab title="Guest">
+    **Limited Access**
+    
+    - Browse library (read-only)
+    - Read books
+    - No progress tracking
+    - No personalization
+  </Tab>
+</Tabs>
+
+### Managing Permissions
+
+Fine-tune access with granular permissions:
+
+- **Read access**: View and read books
+- **Write access**: Add tags and annotations
+- **Admin access**: Manage users and settings
+- **Scan library**: Trigger library scans
+- **Edit metadata**: Modify book information
+
+<Note>
+Custom roles and advanced permission management are planned for a future release.
+</Note>
+
+## Library Management
+
+Manage your book collection and trigger scans to update your library.
+
+### Manual Library Scan
+
+Trigger an immediate scan of your configured directories:
+
+<Steps>
+  <Step title="Access library management">
+    Navigate to the Library Management section in the admin panel
+  </Step>
+
+  <Step title="Review scan paths">
+    Check which directories will be scanned:
+    ```
+    Configured directories:
+    - /media/books
+    - /media/comics
+    ```
+  </Step>
+
+  <Step title="Start scan">
+    Click "Scan Library" to begin scanning
+  </Step>
+
+  <Step title="Monitor progress">
+    Watch the scan progress and review the results:
+    - Books found
+    - Books added
+    - Books updated
+    - Errors encountered
+  </Step>
+</Steps>
+
+### Scan Results
+
+After a scan completes, you'll see:
+
+- **Books found**: Total ebook files discovered
+- **Books added**: New books added to the database
+- **Books updated**: Existing books with updated metadata
+- **Errors**: Files that couldn't be processed
+- **Directories scanned**: Number of paths checked
+
+<Tip>
+Run a manual scan after adding new books to your media directories for immediate availability.
+</Tip>
+
+### Automatic Scanning
+
+Dust automatically scans your library at regular intervals:
+
+```bash
+# Default: Scan every 5 minutes
+SCAN_INTERVAL_MINUTES=5
+
+# Default: Cleanup every 60 minutes
+CLEANUP_INTERVAL_MINUTES=60
+```
+
+### Cleanup Operations
+
+Dust periodically removes orphaned database entries:
+
+- **Deleted files**: Books removed from disk
+- **Moved files**: Books relocated to different paths
+- **Corrupted entries**: Invalid database records
+
+<Warning>
+Cleanup operations permanently remove database entries for missing files. Ensure files are backed up before cleanup.
+</Warning>
+
+## System Settings
+
+Configure server-wide settings and preferences.
+
+### Server Configuration
+
+Manage core server settings:
+
+<AccordionGroup>
+  <Accordion title="Port Configuration">
+    Change the server port:
+    
+    ```bash
+    PORT=4001
+    ```
+    
+    Default port is 4001. Change if needed for your network.
+  </Accordion>
+
+  <Accordion title="Database Settings">
+    Configure database location:
+    
+    ```bash
+    DATABASE_URL=file:./dust.db
+    ```
+    
+    By default, SQLite database is stored in the application directory.
+  </Accordion>
+
+  <Accordion title="JWT Secret">
+    Set authentication secret:
+    
+    ```bash
+    JWT_SECRET=your-secure-random-string
+    ```
+    
+    **Important**: Keep this secret secure and never share it.
+  </Accordion>
+</AccordionGroup>
+
+### Library Directories
+
+Configure which directories Dust scans:
+
+```bash
+DUST_DIRS="/media/books:/media/comics"
+```
+
+Multiple directories separated by colons (`:`).
+
+<Steps>
+  <Step title="Update environment">
+    Edit your `.env` file or environment configuration
+  </Step>
+
+  <Step title="Add directories">
+    List all directories containing books or comics
+  </Step>
+
+  <Step title="Restart server">
+    Restart Dust to apply the new configuration
+  </Step>
+
+  <Step title="Trigger scan">
+    Run a manual scan to index the new directories
+  </Step>
+</Steps>
+
+### Metadata Providers
+
+Configure external metadata sources:
+
+<Tabs>
+  <Tab title="Google Books">
+    Enable Google Books API for metadata:
+    
+    ```bash
+    GOOGLE_BOOKS_API_KEY=your_api_key_here
+    ```
+    
+    Provides:
+    - Book titles and authors
+    - Publication information
+    - Book descriptions
+    - Cover images
+  </Tab>
+
+  <Tab title="OpenLibrary">
+    OpenLibrary is enabled by default (no API key required)
+    
+    Provides:
+    - ISBN-based metadata
+    - Author information
+    - Publication details
+    - Cover images
+  </Tab>
+</Tabs>
+
+### Scan Configuration
+
+Tune automatic scanning behavior:
+
+```bash
+# Scan for new books every 10 minutes
+SCAN_INTERVAL_MINUTES=10
+
+# Run cleanup every 2 hours
+CLEANUP_INTERVAL_MINUTES=120
+```
+
+<Note>
+More frequent scans provide faster book availability but increase server load. Balance based on your needs.
+</Note>
+
+## Planned Features
+
+The admin panel will expand with additional features:
+
+<CardGroup cols={2}>
+  <Card title="Analytics Dashboard" icon="chart-line">
+    View reading statistics, popular books, and user engagement metrics
+  </Card>
+
+  <Card title="Tag Management" icon="tags">
+    Create and manage tags for organizing your library
+  </Card>
+
+  <Card title="Backup & Restore" icon="database">
+    Automated backup configuration and restoration tools
+  </Card>
+
+  <Card title="System Health" icon="heart-pulse">
+    Monitor server performance, storage usage, and system logs
+  </Card>
+</CardGroup>
+
+## Best Practices
+
+### Security
+
+<Steps>
+  <Step title="Use strong passwords">
+    Require strong passwords for all user accounts
+  </Step>
+
+  <Step title="Limit admin access">
+    Only grant admin privileges to trusted users
+  </Step>
+
+  <Step title="Regular backups">
+    Back up your database regularly
+  </Step>
+
+  <Step title="Update regularly">
+    Keep Dust updated to the latest version for security patches
+  </Step>
+</Steps>
+
+### Performance
+
+- **Optimize scan intervals**: Don't scan more frequently than necessary
+- **Monitor disk space**: Ensure adequate storage for your library
+- **Regular cleanup**: Run cleanup to remove orphaned entries
+- **Review logs**: Check logs periodically for errors or issues
+
+### User Management
+
+- **Clear role assignment**: Give users appropriate access levels
+- **Document permissions**: Keep track of who has access to what
+- **Regular audits**: Review user accounts and remove inactive users
+- **Communication**: Inform users of system maintenance and changes
+
+## Troubleshooting
+
+### Can't Access Admin Panel
+
+If you can't access the admin panel:
+
+1. **Check permissions**: Verify your account has admin role
+2. **Re-login**: Log out and log back in
+3. **Contact admin**: Ask another admin to grant you permissions
+4. **Check logs**: Review server logs for authentication errors
+
+### Scan Not Working
+
+If library scans fail:
+
+1. **Check paths**: Verify `DUST_DIRS` is correctly configured
+2. **File permissions**: Ensure Dust can read the directories
+3. **Disk space**: Confirm adequate storage is available
+4. **Review errors**: Check the scan results for specific error messages
+5. **Server logs**: Look for detailed error information in logs
+
+### Server Connection Issues
+
+If you can't connect to a server:
+
+1. **Check URL**: Verify the server address is correct
+2. **Network access**: Ensure the server is reachable on your network
+3. **Server status**: Confirm the Dust server is running
+4. **Firewall**: Check firewall settings aren't blocking the connection
+5. **Port**: Verify you're using the correct port number
+
+### Metadata Not Updating
+
+If metadata refresh fails:
+
+1. **Check API keys**: Verify metadata provider API keys are configured
+2. **Internet connection**: Ensure server has internet access
+3. **ISBN availability**: Metadata fetching works best with ISBN
+4. **Rate limits**: External APIs may have rate limits
+5. **Manual scan**: Try a fresh library scan to re-fetch metadata

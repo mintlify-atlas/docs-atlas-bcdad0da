@@ -1,0 +1,241 @@
+---
+title: Organizing Books
+description: Learn how to structure and organize your ebook library in Dust for optimal metadata detection and browsing
+---
+
+## Folder Structure
+
+Dust uses a specific folder structure to automatically organize and categorize your ebooks. Following this structure ensures proper metadata detection and a better browsing experience.
+
+### Recommended Structure
+
+```
+/media/books/
+├── Author Name/
+│   └── Book Title/
+│       ├── book.epub
+│       └── cover.jpg
+└── Another Author/
+    └── Another Book/
+        ├── book.pdf
+        └── book_cover.jpg
+```
+
+<Steps>
+  <Step title="Create author folders">
+    Organize books by author name. Use the author's full name as it should appear in your library.
+    
+    ```
+    /media/books/Henry James/
+    /media/books/Jeff Szuhay/
+    ```
+  </Step>
+
+  <Step title="Create book folders">
+    Inside each author folder, create a folder for each book using the book title.
+    
+    ```
+    /media/books/Henry James/The Portrait of a Lady/
+    /media/books/Jeff Szuhay/Learn C Programming/
+    ```
+  </Step>
+
+  <Step title="Add your book files">
+    Place the ebook file inside the book folder. Supported formats include:
+    - EPUB (`.epub`)
+    - PDF (`.pdf`)
+    - MOBI (`.mobi`)
+    - AZW/AZW3 (`.azw`, `.azw3`)
+    - DJVU (`.djvu`)
+    
+    ```
+    /media/books/Henry James/The Portrait of a Lady/portrait.epub
+    ```
+  </Step>
+
+  <Step title="Add cover images (optional)">
+    Place cover images in the same folder as the book file. Dust will automatically detect them.
+    
+    ```
+    /media/books/Henry James/The Portrait of a Lady/portrait_cover.jpg
+    ```
+  </Step>
+</Steps>
+
+## Cover Image Detection
+
+Dust automatically detects cover images placed alongside your book files. The following naming patterns are recognized:
+
+- `cover.jpg`, `cover.png`, `cover.jpeg`, `cover.webp`
+- `folder.jpg`, `folder.png`
+- Any filename ending with `_cover` followed by an image extension (e.g., `portrait_cover.jpg`, `book_cover.png`)
+
+<Note>
+If no local cover is found and you're using ISBN-based filenames, Dust will automatically download cover art from metadata providers and save it in the book's folder.
+</Note>
+
+## ISBN-Based Metadata Fetching
+
+For automatic metadata retrieval, you can name your book files using their ISBN or ISBN-13 number. This enables Dust to fetch accurate book information from external sources.
+
+### Using ISBN Filenames
+
+<Steps>
+  <Step title="Find the book's ISBN">
+    Locate the ISBN or ISBN-13 for your book. This is usually found on the back cover or copyright page.
+  </Step>
+
+  <Step title="Rename the file">
+    Use the ISBN as the filename (with or without hyphens).
+    
+    ```
+    9781789349917.epub
+    978-0-123456-78-9.pdf
+    ```
+  </Step>
+
+  <Step title="Place in correct folder structure">
+    Follow the same author/title folder structure.
+    
+    ```
+    /media/books/Jeff Szuhay/Learn C Programming/9781789349917.epub
+    ```
+  </Step>
+</Steps>
+
+<Tip>
+ISBN-based naming is optional. Dust will still process books with regular filenames, but you'll need to manually edit metadata if needed.
+</Tip>
+
+## Best Practices
+
+### Naming Conventions
+
+- **Use clear, readable names**: Choose descriptive folder names that make browsing easy
+- **Be consistent**: Stick to one naming format across your library
+- **Avoid special characters**: Use standard alphanumeric characters to prevent issues
+
+### Organization Tips
+
+<CardGroup cols={2}>
+  <Card title="Group by series" icon="books">
+    For book series, consider adding series information to the folder name:
+    ```
+    /media/books/J.K. Rowling/Harry Potter 01 - Philosopher's Stone/
+    ```
+  </Card>
+
+  <Card title="Multiple formats" icon="file">
+    You can store multiple formats of the same book in the same folder:
+    ```
+    /media/books/Author/Book/
+    ├── book.epub
+    ├── book.pdf
+    └── cover.jpg
+    ```
+  </Card>
+</CardGroup>
+
+### File Management
+
+<Warning>
+Don't move or rename files while Dust is scanning your library. This can cause inconsistencies in your database.
+</Warning>
+
+- **Scan after changes**: Trigger a library scan after adding new books
+- **Keep backups**: Always maintain backups of your book collection
+- **Check permissions**: Ensure Dust has read access to your media directories
+
+## Library Scanning
+
+Dust automatically scans your configured directories at regular intervals. The default scan interval is every 5 minutes, but you can customize this in your environment configuration.
+
+### Manual Scanning
+
+To trigger an immediate library scan:
+
+<Steps>
+  <Step title="Access admin panel">
+    Navigate to the Admin section (requires admin permissions)
+  </Step>
+
+  <Step title="Go to Library Management">
+    Select the Library Management option
+  </Step>
+
+  <Step title="Trigger scan">
+    Click "Scan Library" to start an immediate scan of all configured directories
+  </Step>
+</Steps>
+
+### Scan Configuration
+
+You can configure scanning behavior using environment variables:
+
+```bash
+# How often to scan for new books (in minutes)
+SCAN_INTERVAL_MINUTES=10
+
+# How often to cleanup removed books (in minutes)
+CLEANUP_INTERVAL_MINUTES=120
+```
+
+## Metadata Management
+
+### Automatic Metadata
+
+Dust automatically extracts metadata from:
+- **Embedded file metadata**: Title, author, publisher, publication date from EPUB/PDF files
+- **External providers**: OpenLibrary and Google Books (when ISBN is available)
+- **Folder structure**: Author name from parent folder
+
+### Manual Metadata Updates
+
+You can refresh metadata for individual books:
+
+<Steps>
+  <Step title="Open the book in reader">
+    Navigate to the book you want to update
+  </Step>
+
+  <Step title="Access book info">
+    Click the info panel toggle to view book details
+  </Step>
+
+  <Step title="Refresh metadata">
+    Click "Refresh Metadata" (admin only) to re-fetch information from metadata providers
+  </Step>
+</Steps>
+
+<Note>
+Metadata refreshing requires admin permissions and will attempt to fetch the latest information from configured metadata providers.
+</Note>
+
+## Troubleshooting
+
+### Books Not Appearing
+
+If your books aren't showing up in Dust:
+
+1. **Check file format**: Ensure the file extension is supported
+2. **Verify folder structure**: Confirm you're using the author/title/file structure
+3. **Check permissions**: Make sure Dust can read the files
+4. **Review logs**: Check server logs for scan errors
+5. **Trigger manual scan**: Use the admin panel to scan immediately
+
+### Incorrect Metadata
+
+If metadata is incorrect or missing:
+
+1. **Use ISBN filenames**: Rename files with their ISBN for automatic fetching
+2. **Check external API keys**: Ensure `GOOGLE_BOOKS_API_KEY` is configured if using Google Books
+3. **Refresh metadata**: Use the refresh metadata function (admin only)
+4. **Manual editing**: Edit book details directly (feature coming soon)
+
+### Duplicate Books
+
+Dust uses file paths to identify books. If you move a file, Dust may create a duplicate entry:
+
+1. **Avoid moving files**: Keep files in their original location
+2. **Use cleanup scans**: Regular cleanup scans remove orphaned entries
+3. **Archive old entries**: Use the archive feature to hide outdated entries

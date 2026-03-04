@@ -1,0 +1,84 @@
+---
+title: "Invitations"
+description: "Create invitation tokens for new users"
+---
+
+## Create Invitation Token
+
+Generate a signed invitation token for a specific email address. Tokens are valid for 24 hours and are never stored in the database.
+
+### Endpoint
+
+```
+POST /admin/invitations
+```
+
+### Authentication
+
+This endpoint requires admin authentication. Include a valid JWT token with admin privileges in the Authorization header.
+
+### Request Body
+
+<ParamField body="email" type="string" required>
+  Email address to generate the invitation token for
+</ParamField>
+
+### Response
+
+<ResponseField name="token" type="string">
+  The generated invitation token. This token should be sent to the user via email or other secure channel. The token format is: `base64url(email|expiration) + "." + base64url(hmac_sha256(secret, email|expiration))`
+</ResponseField>
+
+### Example Request
+
+```bash
+curl -X POST http://localhost:3000/admin/invitations \
+  -H "Authorization: Bearer YOUR_ADMIN_JWT_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "newuser@example.com"
+  }'
+```
+
+### Example Response
+
+```json
+{
+  "token": "bmV3dXNlckBleGFtcGxlLmNvbXwxNzA1MzIxMjAw.aGFzaGVkX3NpZ25hdHVyZV9oZXJl"
+}
+```
+
+## How Invitation Tokens Work
+
+Invitation tokens in Dust are stateless and cryptographically signed:
+
+- **Generation**: Tokens encode the email address and expiration timestamp (24 hours from creation), signed with HMAC-SHA256 using the JWT secret
+- **Format**: `base64url(email|exp) + "." + base64url(hmac_sha256(secret, email|exp))`
+- **Verification**: Tokens are verified by recomputing the HMAC and checking:
+  - The signature matches
+  - The token has not expired
+  - The embedded email matches the expected email
+- **Storage**: Tokens are never stored in the database, making them stateless and secure
+- **Expiration**: Tokens expire 24 hours after generation
+
+### Token Usage
+
+After generating an invitation token, send it to the user through a secure channel (email, etc.). The user can then use this token to register an account when the server is configured for invitation-only authentication.
+
+## Error Responses
+
+<ResponseField name="400 Bad Request">
+  Email is required or invalid request body
+</ResponseField>
+
+<ResponseField name="401 Unauthorized">
+  Missing or invalid authentication token
+</ResponseField>
+
+<ResponseField name="403 Forbidden">
+  User does not have admin privileges
+</ResponseField>
+
+<ResponseField name="500 Internal Server Error">
+  Failed to generate invitation token
+</ResponseField>

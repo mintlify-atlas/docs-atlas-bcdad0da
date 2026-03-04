@@ -1,0 +1,377 @@
+---
+title: Reading Interface
+description: Learn how to use Dust's reading interface for ebooks and comics, including navigation, settings, and progress tracking
+---
+
+## Opening a Book
+
+To start reading, navigate to your library and click on any book or comic. This opens the reading interface with your content ready to view.
+
+<Steps>
+  <Step title="Browse your library">
+    Navigate to the Library page to see all your available books and comics
+  </Step>
+
+  <Step title="Select a book">
+    Click on any book cover or title to open it in the reader
+  </Step>
+
+  <Step title="Start reading">
+    The book opens at your last reading position, or at the beginning if you haven't started it yet
+  </Step>
+</Steps>
+
+## Reader Layout
+
+The reading interface consists of three main areas:
+
+<CardGroup cols={3}>
+  <Card title="Book Info Panel" icon="info-circle">
+    Left sidebar showing book details, cover, metadata, and reading progress
+  </Card>
+
+  <Card title="Reading Area" icon="book-open">
+    Center area displaying your book content with full reading controls
+  </Card>
+
+  <Card title="Reader Controls" icon="sliders">
+    Top toolbar with navigation, settings, and view options
+  </Card>
+</CardGroup>
+
+### Book Info Panel
+
+The left panel displays:
+
+- **Book cover**: Visual representation of the book
+- **Title and author**: Book metadata
+- **Reading progress**: Progress bar showing completion percentage
+- **Description**: Book summary and overview
+- **Publication info**: Publisher and publication date
+- **ISBN**: Book identifier (when available)
+- **Genre tags**: Categories and classifications
+- **File format**: EPUB, PDF, etc.
+
+<Tip>
+You can hide the book info panel to maximize your reading area. Click the panel toggle button (◧/◨) in the top toolbar.
+</Tip>
+
+### Reading Controls
+
+The top toolbar includes:
+
+- **Back button** (←): Return to library
+- **Panel toggle** (◧/◨): Show/hide book info panel
+- **Navigation arrows** (‹ ›): Previous/next chapter or page
+- **Settings** (⚙): Adjust reading preferences
+- **Fullscreen** (⊞): Toggle fullscreen mode
+
+## Navigation
+
+### Page Navigation
+
+Dust provides multiple ways to navigate through your books:
+
+<Tabs>
+  <Tab title="Mouse/Touch">
+    - **Click left/right edges**: Navigate to previous/next page
+    - **Scroll**: Continuous reading (EPUB only)
+    - **Click navigation buttons**: Use toolbar arrows
+  </Tab>
+
+  <Tab title="Keyboard">
+    - **Arrow keys**: Previous/next page
+    - **Page Up/Down**: Jump pages
+    - **Home/End**: Go to beginning/end
+    - **Spacebar**: Next page
+  </Tab>
+
+  <Tab title="Toolbar">
+    - **Previous button** (‹): Go back one page/chapter
+    - **Next button** (›): Advance one page/chapter
+  </Tab>
+</Tabs>
+
+### Chapter Navigation (EPUB)
+
+For EPUB books with table of contents:
+
+<Steps>
+  <Step title="Access TOC">
+    Look for the table of contents in the book's navigation (implementation varies by book)
+  </Step>
+
+  <Step title="Jump to chapter">
+    Click on any chapter to jump directly to that section
+  </Step>
+
+  <Step title="Use chapter arrows">
+    The ‹ › buttons navigate between chapters in EPUB files
+  </Step>
+</Steps>
+
+## Reading Settings
+
+Customize your reading experience by clicking the settings button (⚙) in the toolbar.
+
+### Theme Options
+
+<CardGroup cols={3}>
+  <Card title="Light Theme" icon="sun">
+    Black text on white background - ideal for well-lit environments
+  </Card>
+
+  <Card title="Dark Theme" icon="moon">
+    White text on dark background - reduces eye strain in low light
+  </Card>
+
+  <Card title="Sepia Theme" icon="book">
+    Warm, paper-like tones - comfortable for extended reading sessions
+  </Card>
+</CardGroup>
+
+### Font Customization (EPUB)
+
+For EPUB files, you can customize typography:
+
+<AccordionGroup>
+  <Accordion title="Font Size">
+    Adjust text size from 12px to 24px using the slider
+    
+    - **Smaller (12-14px)**: Fit more text on screen
+    - **Medium (16-18px)**: Default comfortable size
+    - **Larger (20-24px)**: Easier reading, better accessibility
+  </Accordion>
+
+  <Accordion title="Font Family">
+    Choose from several typefaces:
+    
+    - **Georgia**: Classic serif, great for novels
+    - **Times**: Traditional serif font
+    - **Arial**: Clean sans-serif
+    - **Helvetica**: Modern sans-serif
+    - **Verdana**: Highly readable sans-serif
+  </Accordion>
+
+  <Accordion title="Line Height">
+    Adjust spacing between lines from 1.2 to 2.0
+    
+    - **Tight (1.2-1.4)**: More text per screen
+    - **Normal (1.6)**: Default comfortable spacing
+    - **Loose (1.8-2.0)**: Easier to track lines
+  </Accordion>
+</AccordionGroup>
+
+<Note>
+Font customization is only available for EPUB files. PDF files maintain their original formatting.
+</Note>
+
+## Reading Progress
+
+Dust automatically tracks your reading progress across all your books.
+
+### Automatic Saving
+
+<Steps>
+  <Step title="Read normally">
+    Simply read your book - no manual saving required
+  </Step>
+
+  <Step title="Position tracking">
+    Your exact page and scroll position are saved automatically
+  </Step>
+
+  <Step title="Resume anywhere">
+    Open the book on any device and resume where you left off
+  </Step>
+</Steps>
+
+### Progress Indicators
+
+Your progress is displayed in multiple places:
+
+- **Book info panel**: Progress bar with percentage
+- **Bottom progress bar**: Thin bar showing reading position
+- **Library view**: Progress percentage on book cards
+
+### Progress Actions
+
+Manage your reading progress with these actions:
+
+<CardGroup cols={2}>
+  <Card title="Mark as Completed" icon="check">
+    Manually mark a book as 100% complete
+    
+    Available when: Progress > 0% and < 100%
+  </Card>
+
+  <Card title="Reset Progress" icon="rotate-left">
+    Reset your reading position to the beginning
+    
+    Available when: Progress > 0%
+  </Card>
+</CardGroup>
+
+## View Modes
+
+### Standard Mode
+
+Default reading view with book info panel visible. Best for:
+- First-time reading
+- Reference checking
+- Exploring book metadata
+
+### Expanded Mode
+
+Hide the book info panel for maximum reading area. Best for:
+- Distraction-free reading
+- Smaller screens
+- Immersive reading sessions
+
+<Tip>
+Toggle between modes using the panel button (◧/◨) in the toolbar.
+</Tip>
+
+### Fullscreen Mode
+
+Enter fullscreen for the ultimate immersive experience:
+
+<Steps>
+  <Step title="Enter fullscreen">
+    Click the fullscreen button (⊞) in the toolbar
+  </Step>
+
+  <Step title="Auto-hide controls">
+    Controls automatically hide after 3 seconds of inactivity
+  </Step>
+
+  <Step title="Show controls">
+    Move your mouse or tap to reveal controls again
+  </Step>
+
+  <Step title="Exit fullscreen">
+    Click the fullscreen button again or press Esc
+  </Step>
+</Steps>
+
+## Format-Specific Features
+
+### Reading EPUB Files
+
+EPUB is a reflowable format that adapts to your settings:
+
+- **Text reflow**: Content adjusts to font size and screen width
+- **Font customization**: Full typography control
+- **Chapter navigation**: Jump between chapters easily
+- **Bookmark support**: Save specific positions (coming soon)
+
+### Reading PDF Files
+
+PDF maintains original formatting and layout:
+
+- **Fixed layout**: Preserves original design and typography
+- **Page-based navigation**: Navigate page by page
+- **Zoom controls**: Adjust zoom level for readability
+- **No font changes**: Original fonts and styling preserved
+
+### Reading Comics (CBZ/CBR/PDF)
+
+Comic reading optimized for visual content:
+
+- **Page-by-page display**: One page at a time
+- **Fit to width**: Automatically fits pages to screen width
+- **Quick navigation**: Fast page flipping
+- **Image quality**: High-resolution rendering
+
+<Warning>
+Currently, Dust displays one page at a time. Two-page spread view for comics is planned for a future release.
+</Warning>
+
+## Additional Features
+
+### Refresh Metadata (Admin Only)
+
+Administrators can refresh book metadata from external sources:
+
+<Steps>
+  <Step title="Open book info panel">
+    Ensure the book info panel is visible
+  </Step>
+
+  <Step title="Click refresh metadata">
+    Find and click the "Refresh Metadata" button
+  </Step>
+
+  <Step title="Wait for update">
+    The system fetches latest metadata from configured providers
+  </Step>
+</Steps>
+
+<Note>
+This feature requires admin permissions and an active internet connection for external metadata providers.
+</Note>
+
+### Quick Actions
+
+From the book info panel:
+
+- **Back to Library**: Return to your library view
+- **Mark as Completed**: Set book to 100% complete
+- **Reset Progress**: Start over from the beginning
+- **View on Goodreads**: External link (coming soon)
+
+## Keyboard Shortcuts
+
+Speed up your reading with keyboard shortcuts:
+
+| Action | Shortcut |
+|--------|----------|
+| Next page | Right Arrow, Space |
+| Previous page | Left Arrow |
+| Next chapter | Right Arrow (EPUB) |
+| Previous chapter | Left Arrow (EPUB) |
+| Toggle fullscreen | F11 or Fn+F |
+| Return to library | Esc (when in fullscreen) |
+
+<Tip>
+Keyboard shortcuts work in all reading modes and are the fastest way to navigate through your books.
+</Tip>
+
+## Troubleshooting
+
+### Book Won't Open
+
+If a book fails to load:
+
+1. **Check file format**: Ensure the format is supported (EPUB, PDF, CBZ, CBR)
+2. **Verify file integrity**: The file may be corrupted
+3. **Refresh the page**: Try reloading the browser
+4. **Clear cache**: Clear browser cache and try again
+5. **Check server logs**: Look for errors in the server console
+
+### Progress Not Saving
+
+If your reading position isn't being saved:
+
+1. **Check connection**: Ensure you're connected to the server
+2. **Authentication**: Verify you're logged in
+3. **Browser storage**: Check if browser allows local storage
+4. **Server status**: Confirm the server is running
+
+### Settings Not Applying
+
+If reading settings don't take effect:
+
+1. **File format**: Remember that font settings only work with EPUB
+2. **Refresh reader**: Close and reopen the book
+3. **Browser compatibility**: Try a different browser
+4. **Cache issues**: Clear browser cache
+
+### Performance Issues
+
+If the reader is slow or laggy:
+
+1. **Large files**: Very large PDFs may take time to load
+2. **Close other apps**: Free up system resources
+3. **Update browser**: Use the latest browser version
+4. **Reduce quality**: Lower zoom levels can improve performance

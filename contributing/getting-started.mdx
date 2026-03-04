@@ -1,0 +1,195 @@
+---
+title: Getting Started with Contributing
+description: Learn how to start contributing to Dust, from reporting bugs to submitting your first pull request
+---
+
+Thank you for your interest in contributing to Dust! This guide will help you get started with contributing to the project, whether you're reporting bugs, suggesting features, or writing code.
+
+## Ways to Contribute
+
+There are many ways to contribute to Dust beyond writing code:
+
+- **Star the project** on GitHub to show your support
+- **Report bugs** to help us improve stability
+- **Suggest enhancements** to make Dust better for everyone
+- **Improve documentation** to help other users and contributors
+- **Write code** to fix bugs or implement new features
+- **Share Dust** with friends, colleagues, or on social media
+
+## Code of Conduct
+
+This project follows the [Contributor Covenant Code of Conduct](https://github.com/dust-books/dust-server/blob/master/CODE_OF_CONDUCT.md). By participating, you are expected to uphold this code.
+
+Key principles:
+- Demonstrate empathy and kindness toward others
+- Be respectful of differing opinions and experiences
+- Give and gracefully accept constructive feedback
+- Focus on what is best for the community
+
+<Warning>
+Instances of abusive, harassing, or otherwise unacceptable behavior may be reported to brad.cypert@gmail.com. All complaints will be reviewed and investigated promptly and fairly.
+</Warning>
+
+## Before You Start
+
+### Asking Questions
+
+Before asking a question:
+
+1. Search existing [GitHub Issues](https://github.com/dust-books/dust-server/issues) for answers
+2. Check the [documentation](/introduction) for relevant information
+3. Search the internet (Stack Overflow, etc.) for similar questions
+
+If you still need help:
+- Open a new [GitHub Issue](https://github.com/dust-books/dust-server/issues/new)
+- Provide as much context as possible about your question
+- Include relevant version information (Zig, Node.js, OS, etc.)
+
+## Reporting Bugs
+
+### Before Submitting a Bug Report
+
+<Steps>
+  <Step title="Verify you're on the latest version">
+    Make sure you're using the most recent release of Dust. Many bugs are fixed in newer versions.
+  </Step>
+  
+  <Step title="Check if it's actually a bug">
+    Ensure the issue isn't caused by incompatible environment components or configuration errors. Review the documentation carefully.
+  </Step>
+  
+  <Step title="Search for existing reports">
+    Check if someone has already reported the same issue in the [bug tracker](https://github.com/dust-books/dust-server/issues?q=label%3Abug).
+  </Step>
+  
+  <Step title="Collect information">
+    Gather details about the bug:
+    - Stack trace or error messages
+    - OS, platform, and version (Windows, Linux, macOS, x86_64, ARM64)
+    - Zig version, Node.js version (if relevant)
+    - Input that triggered the bug and the actual output
+    - Steps to reliably reproduce the issue
+  </Step>
+</Steps>
+
+### Submitting a Bug Report
+
+1. Open an [Issue](https://github.com/dust-books/dust-server/issues/new/choose) and select the **Bug Report** template
+2. Fill out all required fields in the template
+3. Explain the behavior you expected vs. the actual behavior
+4. Provide detailed reproduction steps that others can follow
+5. Include all the information you collected above
+
+<Info>
+Good bug reports should include a reduced test case that isolates the problem. This makes it much easier for maintainers to fix the issue.
+</Info>
+
+After filing:
+- The project team will label and triage your issue
+- A maintainer will attempt to reproduce the bug
+- Issues that can't be reproduced will be marked `needs-repro`
+- Reproducible bugs will be marked `needs-fix` and made available for contribution
+
+## Suggesting Enhancements
+
+### Before Submitting an Enhancement
+
+Before suggesting a new feature:
+
+1. **Use the latest version** - The feature might already exist
+2. **Read the documentation** - Check if the functionality is already available through configuration
+3. **Search existing issues** - Your enhancement might already be suggested
+4. **Consider the scope** - Ensure your idea fits the project's goals and would benefit most users
+
+<Note>
+Features that only benefit a small subset of users might be better suited as add-ons or plugins rather than core functionality.
+</Note>
+
+### Submitting an Enhancement Suggestion
+
+1. Open an [Issue](https://github.com/dust-books/dust-server/issues/new/choose) and select the **Feature Request** template
+2. Use a clear and descriptive title
+3. Provide a detailed step-by-step description of the suggested enhancement
+4. Describe the current behavior and explain what you expected instead
+5. Include screenshots or mockups if applicable
+6. Explain why this enhancement would be useful to most Dust users
+7. Reference other projects that have implemented similar features
+
+## Your First Code Contribution
+
+Ready to contribute code? Here's the workflow:
+
+<Steps>
+  <Step title="Fork and clone the repository">
+    Fork the repository on GitHub and clone it to your local machine.
+  </Step>
+  
+  <Step title="Set up your development environment">
+    Follow the instructions in the [Development Setup](/contributing/development-setup) guide.
+  </Step>
+  
+  <Step title="Create a feature branch">
+    Create a new branch for your changes:
+    ```bash
+    git checkout -b fix/your-bug-fix
+    # or
+    git checkout -b feat/your-feature
+    ```
+  </Step>
+  
+  <Step title="Make your changes">
+    Write your code following our [Code Style Guide](/contributing/code-style).
+  </Step>
+  
+  <Step title="Test thoroughly">
+    Run the test suite and test your changes manually:
+    ```bash
+    zig build test
+    zig build -Doptimize=ReleaseSafe
+    ./zig-out/bin/dust-server
+    ```
+  </Step>
+  
+  <Step title="Commit with conventional commits">
+    Use the [Conventional Commits](https://www.conventionalcommits.org/) format:
+    ```bash
+    git commit -m "fix: resolve database connection timeout"
+    # or
+    git commit -m "feat: add book search by ISBN"
+    ```
+    
+    See the [Code Style](/contributing/code-style) guide for commit message details.
+  </Step>
+  
+  <Step title="Push and create a Pull Request">
+    Push your branch to your fork and create a Pull Request on GitHub. The PR template will guide you through the process.
+  </Step>
+</Steps>
+
+## Improving Documentation
+
+Documentation improvements are always welcome! You can:
+
+- Open an [Issue](https://github.com/dust-books/dust-server/issues/new/choose) using the **Documentation Update** template
+- Submit a Pull Request with your documentation changes directly
+- Use the `docs:` commit type for documentation changes
+
+<Note>
+Documentation changes (with `docs:` commit type) don't trigger releases, but they do appear in the changelog.
+</Note>
+
+## Legal Notice
+
+<Warning>
+When contributing to this project, you must agree that:
+- You have authored 100% of the content
+- You have the necessary rights to the content
+- Your contribution may be provided under the project license
+</Warning>
+
+## Next Steps
+
+- Set up your [Development Environment](/contributing/development-setup)
+- Learn about our [Code Style Guidelines](/contributing/code-style)
+- Understand our [Release Process](/contributing/release-process)
+- Browse [open issues](https://github.com/dust-books/dust-server/issues) to find something to work on

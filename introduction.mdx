@@ -1,0 +1,121 @@
+---
+title: Introduction
+description: Dust is a self-hosted media server focused on ebooks and comics. Think Plex, but for people who love to read and collect digital books.
+---
+
+Dust is a high-performance media server built with Zig, designed specifically for ebook and comic book enthusiasts. It provides automatic metadata fetching, intelligent folder organization, and a beautiful web interface for managing your digital library.
+
+## Why Dust?
+
+Dust combines the power of a modern media server with specialized features for book lovers:
+
+- **Self-Hosted**: Complete control over your data and library
+- **Fast & Efficient**: Built with Zig for exceptional performance and low resource usage
+- **Automatic Metadata**: Fetches book information from OpenLibrary and Google Books API
+- **Smart Organization**: Handles both ebooks (EPUB, PDF) and comics with folder-based structure
+- **Web Interface Built-In**: No separate client installation needed
+- **Docker & Native**: Deploy however you prefer
+
+## Key Features
+
+<CardGroup cols={2}>
+  <Card title="Automatic Scanning" icon="magnifying-glass">
+    Monitors your library directories and automatically indexes new books and comics
+  </Card>
+  
+  <Card title="ISBN Metadata Fetching" icon="book">
+    Name files with ISBNs to automatically retrieve complete metadata including covers
+  </Card>
+  
+  <Card title="Cover Art Management" icon="image">
+    Automatically detects local cover art or downloads from metadata providers
+  </Card>
+  
+  <Card title="Multi-Format Support" icon="file">
+    Support for EPUB, PDF, CBZ, CBR and other popular ebook and comic formats
+  </Card>
+</CardGroup>
+
+## Architecture
+
+Dust is built with modern technologies for reliability and performance:
+
+- **Backend**: Zig 0.15.2 with http.zig framework
+- **Database**: SQLite (bundled with binary)
+- **Authentication**: JWT-based with role-based permissions
+- **Background Tasks**: Automatic library scanning and cleanup
+- **Frontend**: Modern web client served directly by the server
+
+## Getting Started
+
+<CardGroup cols={2}>
+  <Card title="Quickstart" icon="rocket" href="/quickstart">
+    Get Dust running in minutes with our guided setup
+  </Card>
+  
+  <Card title="Installation" icon="download" href="/installation">
+    Detailed installation guides for all deployment methods
+  </Card>
+  
+  <Card title="Configuration" icon="gear" href="/setup/environment-variables">
+    Configure environment variables and customize your server
+  </Card>
+  
+  <Card title="Library Setup" icon="folder" href="/setup/library-structure">
+    Learn how to organize your books and comics for optimal metadata
+  </Card>
+</CardGroup>
+
+## Quick Example
+
+Get started with Dust in seconds:
+
+```bash
+# One-line installation on Ubuntu/Debian
+curl -fsSL https://raw.githubusercontent.com/dust-books/dust-server/main/scripts/install.sh | sudo bash
+
+# Or with Docker
+docker run -d \
+  -p 4001:4001 \
+  -v /path/to/books:/app/books:ro \
+  -v dust_data:/app/data \
+  -e JWT_SECRET=$(openssl rand -base64 32) \
+  -e DUST_DIRS=/app/books \
+  dust-server:latest
+```
+
+Then open `http://localhost:4001` in your browser to create your admin account and start organizing your library.
+
+## System Requirements
+
+<Note>
+  Dust is designed to be lightweight and can run on modest hardware:
+  - **CPU**: Any modern x86_64 or ARM64 processor
+  - **RAM**: 256MB minimum (512MB recommended)
+  - **Storage**: Depends on your library size
+  - **OS**: Linux (Ubuntu/Debian recommended), Docker, or build from source
+</Note>
+
+## Open Source
+
+Dust is open source and available on [GitHub](https://github.com/dust-books/dust-server). Contributions, bug reports, and feature requests are welcome!
+
+## What's Next?
+
+<Steps>
+  <Step title="Install Dust">
+    Follow our [Quickstart](/quickstart) guide to get Dust running on your server
+  </Step>
+  
+  <Step title="Organize Your Library">
+    Learn about the [folder structure](/setup/library-structure) Dust expects for optimal metadata fetching
+  </Step>
+  
+  <Step title="Configure & Customize">
+    Set up [environment variables](/setup/environment-variables) to customize scanning intervals, API keys, and more
+  </Step>
+  
+  <Step title="Create Your Account">
+    Access the web interface and create your admin account to start using Dust
+  </Step>
+</Steps>

@@ -1,0 +1,227 @@
+---
+title: 'Reading Progress'
+description: 'Track and retrieve reading progress for books'
+---
+
+## Get Reading Progress
+
+```
+GET /books/:id/progress
+```
+
+Retrieves the reading progress for a specific book for the authenticated user.
+
+### Authentication
+
+**Required.** Must include a valid JWT token in the Authorization header.
+
+### Path Parameters
+
+<ParamField path="id" type="integer" required>
+  The unique identifier of the book
+</ParamField>
+
+### Headers
+
+<ParamField header="Authorization" type="string" required>
+  Bearer token for authentication
+  ```
+  Authorization: Bearer <your_jwt_token>
+  ```
+</ParamField>
+
+### Response
+
+<ResponseField name="book" type="object">
+  Book reference
+  
+  <ResponseField name="id" type="integer">
+    Book identifier
+  </ResponseField>
+</ResponseField>
+
+<ResponseField name="progress" type="object" optional>
+  Reading progress (null if no progress has been recorded)
+  
+  <ResponseField name="current_page" type="integer">
+    Current page number
+  </ResponseField>
+  
+  <ResponseField name="total_pages" type="integer" optional>
+    Total number of pages
+  </ResponseField>
+  
+  <ResponseField name="percentage_complete" type="number">
+    Completion percentage (0-100)
+  </ResponseField>
+  
+  <ResponseField name="last_read_at" type="string">
+    ISO 8601 timestamp of last reading activity
+  </ResponseField>
+</ResponseField>
+
+### Example Request
+
+```bash
+curl -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." \
+  https://your-dust-server.com/books/1/progress
+```
+
+### Example Response (With Progress)
+
+```json
+{
+  "book": {
+    "id": 1
+  },
+  "progress": {
+    "current_page": 87,
+    "total_pages": 180,
+    "percentage_complete": 48.33,
+    "last_read_at": "2024-03-15T14:30:00Z"
+  }
+}
+```
+
+### Example Response (No Progress)
+
+```json
+{
+  "book": {
+    "id": 1
+  },
+  "progress": null
+}
+```
+
+---
+
+## Update Reading Progress
+
+```
+PUT /books/:id/progress
+```
+
+Updates or creates reading progress for a specific book for the authenticated user.
+
+### Authentication
+
+**Required.** Must include a valid JWT token in the Authorization header.
+
+### Path Parameters
+
+<ParamField path="id" type="integer" required>
+  The unique identifier of the book
+</ParamField>
+
+### Headers
+
+<ParamField header="Authorization" type="string" required>
+  Bearer token for authentication
+</ParamField>
+
+<ParamField header="Content-Type" type="string" required>
+  Must be `application/json`
+</ParamField>
+
+### Request Body
+
+<ParamField body="current_page" type="integer" optional>
+  Current page number (defaults to 0)
+</ParamField>
+
+<ParamField body="total_pages" type="integer" optional>
+  Total number of pages in the book
+</ParamField>
+
+<ParamField body="current_location" type="string" optional>
+  Current location identifier (for EPUB CFI, etc.) - currently not stored
+</ParamField>
+
+<ParamField body="percentage_complete" type="number" optional>
+  Completion percentage. Can be provided in 0-1 range or 0-100 range (automatically normalized to 0-1 for storage)
+</ParamField>
+
+### Response
+
+<ResponseField name="success" type="boolean">
+  Whether the update was successful
+</ResponseField>
+
+<ResponseField name="progress" type="object">
+  Updated progress information
+  
+  <ResponseField name="current_page" type="integer">
+    Current page number
+  </ResponseField>
+  
+  <ResponseField name="total_pages" type="integer" optional>
+    Total number of pages
+  </ResponseField>
+  
+  <ResponseField name="percentage_complete" type="number">
+    Completion percentage (returned in 0-100 range)
+  </ResponseField>
+</ResponseField>
+
+### Example Request
+
+```bash
+curl -X PUT \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." \
+  -H "Content-Type: application/json" \
+  -d '{
+    "current_page": 87,
+    "total_pages": 180,
+    "percentage_complete": 48.33
+  }' \
+  https://your-dust-server.com/books/1/progress
+```
+
+### Example Response
+
+```json
+{
+  "success": true,
+  "progress": {
+    "current_page": 87,
+    "total_pages": 180,
+    "percentage_complete": 48.33
+  }
+}
+```
+
+### Notes
+
+- If `percentage_complete` is not provided, it will be automatically calculated from `current_page` and `total_pages`
+- The endpoint uses upsert logic - it will create a new progress record if one doesn't exist, or update the existing one
+- The `last_read_at` timestamp is automatically set to the current time on each update
+- Percentage values can be sent in either 0-1 or 0-100 range; values > 1 are automatically divided by 100
+
+### Error Responses
+
+<ResponseField name="error" type="string">
+  Error message
+</ResponseField>
+
+#### 400 Bad Request
+
+```json
+{
+  "error": "Invalid book ID"
+}
+```
+
+```json
+{
+  "error": "Invalid JSON"
+}
+```
+
+#### 401 Unauthorized
+
+```json
+{
+  "error": "Unauthorized"
+}
+```

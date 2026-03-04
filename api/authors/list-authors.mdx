@@ -1,0 +1,84 @@
+---
+title: "List Authors"
+description: "Retrieve a list of all authors in the library"
+---
+
+## Endpoint
+
+```
+GET /books/authors
+```
+
+Returns a list of all authors in the library with their basic information.
+
+## Authentication
+
+This endpoint requires authentication. Include your API token in the request headers.
+
+## Request
+
+No parameters required.
+
+### Example Request
+
+```bash
+curl -X GET https://your-dust-server.com/books/authors \
+  -H "Authorization: Bearer YOUR_API_TOKEN"
+```
+
+## Response
+
+Returns an object containing an array of authors.
+
+<ResponseField name="authors" type="array">
+  Array of author objects
+  
+  <ResponseField name="id" type="integer" required>
+    Unique identifier for the author
+  </ResponseField>
+  
+  <ResponseField name="name" type="string" required>
+    Full name of the author
+  </ResponseField>
+  
+  <ResponseField name="biography" type="string | null">
+    Biography or description of the author
+  </ResponseField>
+  
+  <ResponseField name="birth_date" type="string | null">
+    Author's birth date
+  </ResponseField>
+  
+  <ResponseField name="nationality" type="string | null">
+    Author's nationality
+  </ResponseField>
+</ResponseField>
+
+### Example Response
+
+```json
+{
+  "authors": [
+    {
+      "id": 1,
+      "name": "Isaac Asimov",
+      "biography": "American writer and professor of biochemistry at Boston University.",
+      "birth_date": "1920-01-02",
+      "nationality": "American"
+    },
+    {
+      "id": 2,
+      "name": "Ursula K. Le Guin",
+      "biography": "American author best known for her works of speculative fiction.",
+      "birth_date": "1929-10-21",
+      "nationality": "American"
+    }
+  ]
+}
+```
+
+## Status Codes
+
+- `200` - Success
+- `401` - Unauthorized (missing or invalid authentication)
+- `500` - Internal server error

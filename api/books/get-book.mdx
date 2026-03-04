@@ -1,0 +1,154 @@
+---
+title: 'Get Book'
+description: 'Retrieve detailed information about a specific book'
+---
+
+## Endpoint
+
+```
+GET /books/:id
+```
+
+Returns detailed information about a specific book, including its author and associated tags.
+
+## Authentication
+
+No authentication required.
+
+## Path Parameters
+
+<ParamField path="id" type="integer" required>
+  The unique identifier of the book
+</ParamField>
+
+## Response
+
+<ResponseField name="book" type="object">
+  Book details
+  
+  <ResponseField name="id" type="integer">
+    Unique identifier for the book
+  </ResponseField>
+  
+  <ResponseField name="name" type="string">
+    Book title
+  </ResponseField>
+  
+  <ResponseField name="author" type="object">
+    Author information
+    
+    <ResponseField name="id" type="integer">
+      Author's unique identifier
+    </ResponseField>
+    
+    <ResponseField name="name" type="string">
+      Author's name
+    </ResponseField>
+  </ResponseField>
+  
+  <ResponseField name="status" type="string">
+    Book status ("active" or "archived")
+  </ResponseField>
+  
+  <ResponseField name="isbn" type="string" optional>
+    ISBN number
+  </ResponseField>
+  
+  <ResponseField name="description" type="string" optional>
+    Book description
+  </ResponseField>
+  
+  <ResponseField name="page_count" type="integer" optional>
+    Number of pages
+  </ResponseField>
+  
+  <ResponseField name="file_size" type="integer" optional>
+    File size in bytes
+  </ResponseField>
+  
+  <ResponseField name="file_format" type="string" optional>
+    Format of the book file (e.g., "epub", "pdf")
+  </ResponseField>
+  
+  <ResponseField name="cover_image_path" type="string" optional>
+    Relative path to the book cover (e.g., "covers/123")
+  </ResponseField>
+</ResponseField>
+
+<ResponseField name="tags" type="array">
+  Array of tags associated with the book
+  
+  <ResponseField name="id" type="integer">
+    Tag identifier
+  </ResponseField>
+  
+  <ResponseField name="name" type="string">
+    Tag name
+  </ResponseField>
+  
+  <ResponseField name="category" type="string">
+    Tag category
+  </ResponseField>
+</ResponseField>
+
+## Example Request
+
+```bash
+curl https://your-dust-server.com/books/1
+```
+
+## Example Response
+
+```json
+{
+  "book": {
+    "id": 1,
+    "name": "The Great Gatsby",
+    "author": {
+      "id": 5,
+      "name": "F. Scott Fitzgerald"
+    },
+    "status": "active",
+    "isbn": "9780743273565",
+    "description": "A novel set in the Jazz Age that tells the story of Jay Gatsby's pursuit of Daisy Buchanan.",
+    "page_count": 180,
+    "file_size": 2456789,
+    "file_format": "epub",
+    "cover_image_path": "covers/1"
+  },
+  "tags": [
+    {
+      "id": 10,
+      "name": "Fiction",
+      "category": "genre"
+    },
+    {
+      "id": 23,
+      "name": "Classic",
+      "category": "style"
+    }
+  ]
+}
+```
+
+## Error Responses
+
+<ResponseField name="error" type="string">
+  Error message
+</ResponseField>
+
+### 400 Bad Request
+
+```json
+{
+  "error": "Invalid book ID"
+}
+```
+
+### 404 Not Found
+
+```json
+{
+  "error": "Book not found"
+}
+```

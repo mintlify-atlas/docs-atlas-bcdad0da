@@ -1,0 +1,280 @@
+---
+title: Library Structure
+description: Organize your ebooks and comics for optimal scanning and metadata detection
+---
+
+Dust expects your media to follow a specific folder structure for proper organization and metadata fetching.
+
+## Overview
+
+Dust supports two types of media:
+- **Books**: ePub, PDF, and other ebook formats
+- **Comics**: Comic books in PDF and other formats
+
+Each type has its own recommended folder structure to optimize metadata detection and organization.
+
+## Books Structure
+
+Books should be organized by author, then by title:
+
+```
+books/
+├── Author Name/
+│   ├── Book Title/
+│   │   ├── book.epub
+│   │   └── cover.jpg
+│   └── Another Book/
+│       ├── another.pdf
+│       └── book_cover.jpg
+└── Another Author/
+    └── Their Book/
+        ├── 9781789349917.epub
+        └── folder.png
+```
+
+### Books Example (from source)
+
+```
+M:
+└── books/
+    ├── Henry James/
+    │   └── The Portrait of a Lady/
+    │       ├── portrait.epub
+    │       └── portrait_cover.jpg
+    └── Jeff Szuhay/
+        └── Learn C Programming/
+            ├── 9781789349917.epub
+            └── learn_c_cover.jpg
+```
+
+<Note>
+  The folder structure helps Dust organize your library. The actual file names can be anything - Dust will extract metadata from the files themselves or fetch it using ISBNs.
+</Note>
+
+## Comics Structure
+
+Comics should be organized by publisher, then series, then issue number:
+
+```
+comics/
+├── Publisher Name/
+│   ├── Series Name/
+│   │   ├── Issue Number/
+│   │   │   ├── comic.pdf
+│   │   │   └── comic_cover.jpg
+│   │   └── Another Issue/
+│   │       ├── issue.pdf
+│   │       └── cover.jpg
+└── Another Publisher/
+    └── Another Series/
+        └── 1/
+            ├── issue_1.pdf
+            └── folder.jpg
+```
+
+### Comics Example (from source)
+
+```
+M:
+└── comics/
+    └── Marvel/
+        └── Iron Man/
+            └── 44/
+                ├── iron_man_44.pdf
+                └── iron_man_44_cover.jpg
+```
+
+## Cover Art Detection
+
+Dust automatically detects cover images that live alongside your media files. Supported patterns:
+
+<Steps>
+  <Step title="Standard cover names">
+    Files named exactly `cover` with common extensions:
+    - `cover.jpg`
+    - `cover.jpeg`
+    - `cover.png`
+    - `cover.webp`
+  </Step>
+  
+  <Step title="Folder images">
+    Windows-style folder thumbnails:
+    - `folder.jpg`
+    - `folder.png`
+  </Step>
+  
+  <Step title="Suffix pattern">
+    Any file ending with `_cover` and an image extension:
+    - `book_title_cover.jpg`
+    - `iron_man_44_cover.png`
+    - `portrait_cover.jpeg`
+  </Step>
+</Steps>
+
+### Automatic Cover Download
+
+<Note>
+  If no local cover image is found, Dust will attempt to download cover art from metadata providers (like OpenLibrary or Google Books) and save it as `cover.<ext>` in the same directory as your media file.
+</Note>
+
+## ISBN-Based Metadata Fetching
+
+For books, you can use ISBN numbers as filenames to enable automatic metadata fetching:
+
+<CodeGroup>
+```bash ISBN-13 (Recommended)
+# Dust will fetch complete metadata for this book
+9781789349917.epub
+```
+
+```bash ISBN-10
+# Also supported
+1789349915.pdf
+```
+
+```bash ISBN with hyphens
+# Hyphens are supported and ignored
+978-0-123456-78-9.epub
+```
+
+```bash Regular filename
+# Still works, but no automatic metadata
+my_favorite_book.epub
+```
+</CodeGroup>
+
+### How ISBN Detection Works
+
+1. Dust scans the filename for a valid ISBN-10 or ISBN-13 number
+2. If found, queries metadata providers (OpenLibrary, Google Books)
+3. Retrieves title, author, publication date, description, and cover image
+4. Stores metadata in the database and links to the file
+
+<Warning>
+  ISBN-based filenames only work for books. Comics use a different metadata system based on publisher and series information.
+</Warning>
+
+## Supported File Formats
+
+### Books
+- ePub (`.epub`)
+- PDF (`.pdf`)
+- Other formats recognized by metadata scanners
+
+### Comics
+- PDF (`.pdf`)
+- Other comic book formats
+
+<Note>
+  File format support may expand in future versions. Check the latest documentation for updates.
+</Note>
+
+## Directory Permissions
+
+The Dust server needs read access to your library directories:
+
+<CodeGroup>
+```bash Docker
+# Mount volumes as read-only
+volumes:
+  - ./books:/app/books:ro
+  - ./comics:/app/comics:ro
+```
+
+```bash Systemd
+# Ensure the dust user can read your directories
+sudo setfacl -R -m u:dust:rX /media/books
+sudo setfacl -R -m u:dust:rX /media/comics
+
+# Or use group permissions
+sudo usermod -aG mediagroup dust
+```
+
+```bash Manual
+# Set read permissions for all users
+chmod -R +rX /path/to/books
+chmod -R +rX /path/to/comics
+```
+</CodeGroup>
+
+## Multiple Library Directories
+
+You can configure Dust to scan multiple directories using the `DUST_DIRS` environment variable:
+
+```bash
+# Colon-separated paths
+DUST_DIRS=/media/books:/media/comics:/mnt/external/library
+```
+
+Each directory will be scanned according to the configured scan interval.
+
+## Best Practices
+
+<Steps>
+  <Step title="Organize consistently">
+    Follow the recommended structure for all your media. This ensures reliable scanning and organization.
+  </Step>
+  
+  <Step title="Include cover images">
+    While Dust can download covers automatically, including local covers is faster and more reliable.
+  </Step>
+  
+  <Step title="Use ISBNs when possible">
+    For books with ISBNs, using the ISBN as the filename enables rich automatic metadata.
+  </Step>
+  
+  <Step title="Keep directories clean">
+    Avoid storing non-media files in your library directories to prevent confusion during scans.
+  </Step>
+  
+  <Step title="Use descriptive folder names">
+    While filenames can be anything, descriptive folder names help you navigate your collection.
+  </Step>
+</Steps>
+
+## Example Complete Structure
+
+```
+M:
+├── books/
+│   ├── Brandon Sanderson/
+│   │   ├── The Way of Kings/
+│   │   │   ├── 9780765365279.epub
+│   │   │   └── cover.jpg
+│   │   └── Words of Radiance/
+│   │       ├── 9780765365286.epub
+│   │       └── cover.jpg
+│   ├── J.R.R. Tolkien/
+│   │   ├── The Hobbit/
+│   │   │   ├── hobbit.epub
+│   │   │   └── folder.jpg
+│   │   └── The Lord of the Rings/
+│   │       ├── lotr_fellowship.epub
+│   │       └── fellowship_cover.jpg
+│   └── Technical/
+│       └── Programming in Zig/
+│           ├── zig_programming.pdf
+│           └── cover.png
+└── comics/
+    ├── DC Comics/
+    │   ├── Batman/
+    │   │   ├── 1/
+    │   │   │   ├── batman_001.pdf
+    │   │   │   └── batman_001_cover.jpg
+    │   │   └── 2/
+    │   │       ├── batman_002.pdf
+    │   │       └── cover.jpg
+    │   └── Superman/
+    │       └── 1/
+    │           ├── superman.pdf
+    │           └── folder.jpg
+    └── Marvel/
+        ├── Spider-Man/
+        │   └── 1/
+        │       ├── spiderman_001.pdf
+        │       └── cover.jpg
+        └── Iron Man/
+            └── 44/
+                ├── iron_man_44.pdf
+                └── iron_man_44_cover.jpg
+```

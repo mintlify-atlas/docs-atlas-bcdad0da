@@ -1,0 +1,92 @@
+---
+title: Login User
+description: Authenticate a user and receive a JWT token
+---
+
+## POST /auth/login
+
+Authenticates a user with email and password, returning a JWT token for subsequent requests.
+
+### Request Body
+
+<ParamField body="email" type="string" required>
+  User's email address.
+</ParamField>
+
+<ParamField body="password" type="string" required>
+  User's password.
+</ParamField>
+
+### Response
+
+<ResponseField name="token" type="string">
+  JWT authentication token. Include this in the Authorization header as `Bearer <token>` for protected endpoints.
+</ResponseField>
+
+<ResponseField name="user" type="object">
+  User information object.
+  
+  <ResponseField name="user.id" type="integer">
+    User's unique identifier.
+  </ResponseField>
+  
+  <ResponseField name="user.email" type="string">
+    User's email address.
+  </ResponseField>
+  
+  <ResponseField name="user.username" type="string | null">
+    User's username, or null if not set.
+  </ResponseField>
+  
+  <ResponseField name="user.displayName" type="string">
+    Display name for the user. Uses username if available, otherwise falls back to email.
+  </ResponseField>
+</ResponseField>
+
+### Example Request
+
+```bash
+curl -X POST http://localhost:3000/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "user@example.com",
+    "password": "securePassword123"
+  }'
+```
+
+### Example Response
+
+```json
+{
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "user": {
+    "id": 1,
+    "email": "user@example.com",
+    "username": "johndoe",
+    "displayName": "johndoe"
+  }
+}
+```
+
+### Using the Token
+
+Once authenticated, include the token in subsequent requests:
+
+```bash
+curl -X GET http://localhost:3000/users/me \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+```
+
+### Status Codes
+
+- `200` - Successfully authenticated
+- `400` - Invalid request (missing required fields or invalid JSON)
+- `401` - Invalid credentials (wrong email or password)
+- `500` - Server error during authentication
+
+### Notes
+
+- A session is created in the database upon successful login
+- The JWT token contains claims: user ID, email, and username
+- Tokens should be stored securely on the client side
+- Use the logout endpoint to invalidate the session when done

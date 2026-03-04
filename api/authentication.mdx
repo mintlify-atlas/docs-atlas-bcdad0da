@@ -1,0 +1,409 @@
+---
+title: 'Authentication'
+description: 'Authenticate with the Dust API using JWT tokens and manage user sessions'
+---
+
+## Overview
+
+Dust uses JWT (JSON Web Tokens) for authentication. After logging in, you receive a token that must be included in the `Authorization` header for protected endpoints.
+
+## Authentication Flow
+
+The authentication system uses HMAC-SHA256 signed JWT tokens with the following structure:
+
+1. **Register** a new user account
+2. **Login** to receive a JWT token
+3. **Include token** in subsequent requests
+4. **Logout** to invalidate the session
+
+<Info>
+The first user to register automatically receives admin privileges.
+</Info>
+
+## JWT Token Structure
+
+Tokens contain the following claims:
+
+```json
+{
+  "user_id": 42,
+  "email": "user@example.com",
+  "username": "alice",
+  "iat": 1709568000,
+  "exp": 1709654400
+}
+```
+
+| Claim | Description |
+|-------|-------------|
+| `user_id` | Unique user identifier |
+| `email` | User's email address |
+| `username` | Optional username |
+| `iat` | Issued at timestamp (Unix time) |
+| `exp` | Expiration timestamp (Unix time) |
+
+<Note>
+Tokens expire **24 hours** after issuance. The expiration is calculated as `now + (24 * 60 * 60)` seconds.
+</Note>
+
+## Registration
+
+### Check Authentication Settings
+
+Before registering, check the server's authentication flow configuration:
+
+<CodeGroup>
+
+```bash cURL
+curl http://localhost:8080/auth/settings
+```
+
+```javascript JavaScript
+const response = await fetch('http://localhost:8080/auth/settings');
+const settings = await response.json();
+console.log(settings.auth_flow); // "signup" or "invitation"
+```
+
+</CodeGroup>
+
+**Response:**
+
+```json
+{
+  "auth_flow": "signup"
+}
+```
+
+<Warning>
+If `auth_flow` is set to `"invitation"`, an invitation token is required for registration.
+</Warning>
+
+### Register a New User
+
+<CodeGroup>
+
+```bash cURL
+curl -X POST http://localhost:8080/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "user@example.com",
+    "password": "securepassword123",
+    "username": "alice"
+  }'
+```
+
+```javascript JavaScript
+const response = await fetch('http://localhost:8080/auth/register', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+  },
+  body: JSON.stringify({
+    email: 'user@example.com',
+    password: 'securepassword123',
+    username: 'alice'
+  })
+});
+
+const data = await response.json();
+```
+
+```python Python
+import requests
+
+response = requests.post(
+    'http://localhost:8080/auth/register',
+    json={
+        'email': 'user@example.com',
+        'password': 'securepassword123',
+        'username': 'alice'
+    }
+)
+
+data = response.json()
+```
+
+</CodeGroup>
+
+**Request Body:**
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `email` | string | Yes | User's email address |
+| `password` | string | Yes | User's password (hashed with bcrypt) |
+| `username` | string | No | Optional username |
+| `display_name` | string | No | Optional display name |
+| `invitation_token` | string | Conditional | Required if auth_flow is "invitation" |
+
+**Response (201 Created):**
+
+```json
+{
+  "message": "User registered successfully",
+  "user_id": 1
+}
+```
+
+**Error Responses:**
+
+```json 409 - User Already Exists
+{
+  "message": "User already exists"
+}
+```
+
+```json 400 - Invalid Invitation Token
+{
+  "message": "Invalid or expired invitation token"
+}
+```
+
+## Login
+
+Authenticate with email and password to receive a JWT token:
+
+<CodeGroup>
+
+```bash cURL
+curl -X POST http://localhost:8080/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "user@example.com",
+    "password": "securepassword123"
+  }'
+```
+
+```javascript JavaScript
+const response = await fetch('http://localhost:8080/auth/login', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+  },
+  body: JSON.stringify({
+    email: 'user@example.com',
+    password: 'securepassword123'
+  })
+});
+
+const data = await response.json();
+const token = data.token;
+
+// Store token for subsequent requests
+localStorage.setItem('auth_token', token);
+```
+
+```python Python
+import requests
+
+response = requests.post(
+    'http://localhost:8080/auth/login',
+    json={
+        'email': 'user@example.com',
+        'password': 'securepassword123'
+    }
+)
+
+data = response.json()
+token = data['token']
+```
+
+</CodeGroup>
+
+**Response (200 OK):**
+
+```json
+{
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "user": {
+    "id": 1,
+    "email": "user@example.com",
+    "username": "alice",
+    "displayName": "alice"
+  }
+}
+```
+
+**Error Response (401 Unauthorized):**
+
+```json
+{
+  "message": "Invalid credentials"
+}
+```
+
+<Info>
+The server uses bcrypt with 12 rounds for password hashing. Passwords are verified using `std.crypto.pwhash.bcrypt.strVerify()`.
+</Info>
+
+## Making Authenticated Requests
+
+Include the JWT token in the `Authorization` header using the Bearer scheme:
+
+<CodeGroup>
+
+```bash cURL
+curl http://localhost:8080/users/me \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+```
+
+```javascript JavaScript
+const token = localStorage.getItem('auth_token');
+
+const response = await fetch('http://localhost:8080/users/me', {
+  headers: {
+    'Authorization': `Bearer ${token}`
+  }
+});
+
+const user = await response.json();
+```
+
+```python Python
+import requests
+
+headers = {
+    'Authorization': f'Bearer {token}'
+}
+
+response = requests.get(
+    'http://localhost:8080/users/me',
+    headers=headers
+)
+
+user = response.json()
+```
+
+</CodeGroup>
+
+## Get Current User
+
+Retrieve the authenticated user's profile:
+
+```bash
+curl http://localhost:8080/users/me \
+  -H "Authorization: Bearer YOUR_TOKEN"
+```
+
+**Response:**
+
+```json
+{
+  "id": 1,
+  "email": "user@example.com",
+  "username": "alice",
+  "displayName": "alice",
+  "roles": ["admin", "user"],
+  "permissions": [
+    "books:read",
+    "books:download",
+    "books:upload",
+    "books:delete"
+  ],
+  "created": "2024-03-01T12:00:00Z"
+}
+```
+
+<Note>
+The endpoint `/profile` is an alias for `/users/me` for client compatibility.
+</Note>
+
+## Logout
+
+Invalidate the current session:
+
+<CodeGroup>
+
+```bash cURL
+curl -X POST http://localhost:8080/auth/logout \
+  -H "Authorization: Bearer YOUR_TOKEN"
+```
+
+```javascript JavaScript
+const token = localStorage.getItem('auth_token');
+
+await fetch('http://localhost:8080/auth/logout', {
+  method: 'POST',
+  headers: {
+    'Authorization': `Bearer ${token}`
+  }
+});
+
+// Clear stored token
+localStorage.removeItem('auth_token');
+```
+
+</CodeGroup>
+
+**Response (200 OK):**
+
+```json
+{
+  "message": "Logged out successfully"
+}
+```
+
+## Error Handling
+
+### Missing Authorization Header
+
+```json 401 Unauthorized
+{
+  "message": "Missing authorization header"
+}
+```
+
+### Invalid Token Format
+
+```json 401 Unauthorized
+{
+  "message": "Invalid authorization header format"
+}
+```
+
+### Expired Token
+
+When the JWT token expires (after 24 hours), you'll receive an authentication error. The user must log in again to obtain a new token.
+
+### Invalid Signature
+
+If the token's signature doesn't match, the request will be rejected. This happens when:
+- The token was tampered with
+- The server's JWT secret changed
+- The token is malformed
+
+## Security Best Practices
+
+<Warning>
+**Never expose your JWT secret!** The secret is configured in the server's config file and should be kept secure.
+</Warning>
+
+1. **Use HTTPS in production** - Always use TLS/SSL to encrypt tokens in transit
+2. **Store tokens securely** - Use secure storage mechanisms (not localStorage in production)
+3. **Implement token refresh** - Consider implementing refresh tokens for long-lived sessions
+4. **Validate token expiration** - Check token expiry on the client side before making requests
+5. **Handle 401 errors** - Redirect to login when authentication fails
+
+## Admin Permissions
+
+Certain endpoints require admin privileges. Admin users have these additional permissions:
+
+- `books:download` - Download book files
+- `books:upload` - Upload new books
+- `books:delete` - Delete books
+- Access to `/admin/*` endpoints
+
+<Info>
+The first user registered on the server automatically receives admin role and permissions.
+</Info>
+
+## Session Management
+
+When a user logs in, a session is created in the database with the JWT token. The session links the token to the user and tracks usage. Logout deletes the session from the database.
+
+```zig
+// Session is created after successful login (routes.zig:193)
+session.createSession(&auth_ctx.auth_service.user_repo.db.db, user.id, token, auth_ctx.allocator)
+
+// Session is deleted on logout (routes.zig:294)
+session.deleteSession(&auth_ctx.auth_service.user_repo.db.db, token)
+```

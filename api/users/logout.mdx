@@ -1,0 +1,48 @@
+---
+title: Logout User
+description: Invalidate the current user session
+---
+
+## POST /auth/logout
+
+Logs out the current user by deleting their session from the database. Requires a valid JWT token.
+
+### Headers
+
+<ParamField header="Authorization" type="string" required>
+  Bearer token obtained from login. Format: `Bearer <token>`
+</ParamField>
+
+### Response
+
+<ResponseField name="message" type="string">
+  Confirmation message that logout was successful.
+</ResponseField>
+
+### Example Request
+
+```bash
+curl -X POST http://localhost:3000/auth/logout \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+```
+
+### Example Response
+
+```json
+{
+  "message": "Logged out successfully"
+}
+```
+
+### Status Codes
+
+- `200` - Successfully logged out
+- `401` - Missing or invalid authorization header
+- `500` - Server error during logout
+
+### Notes
+
+- After logout, the JWT token is invalidated and cannot be used for authenticated requests
+- The session is deleted from the database
+- The token itself expires naturally, but logout provides immediate invalidation
+- Clients should discard the token after receiving a successful logout response

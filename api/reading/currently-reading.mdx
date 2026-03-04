@@ -1,0 +1,162 @@
+---
+title: "Currently Reading"
+description: "Get books that are currently being read by the authenticated user"
+---
+
+## Endpoint
+
+```
+GET /reading/currently-reading
+```
+
+Returns a list of books that the authenticated user is currently reading (progress between 0% and 100%, exclusive).
+
+## Authentication
+
+This endpoint requires authentication. Include your API token in the request headers. The endpoint returns reading progress specific to the authenticated user.
+
+## Request
+
+No parameters required.
+
+### Example Request
+
+```bash
+curl -X GET https://your-dust-server.com/reading/currently-reading \
+  -H "Authorization: Bearer YOUR_API_TOKEN"
+```
+
+## Response
+
+Returns an object containing an array of books with reading progress information. Books are ordered by `last_read_at` in descending order (most recently read first).
+
+<ResponseField name="books" type="array">
+  Array of books currently being read with progress information
+  
+  <ResponseField name="id" type="integer" required>
+    Unique identifier for the book
+  </ResponseField>
+  
+  <ResponseField name="name" type="string" required>
+    Title of the book
+  </ResponseField>
+  
+  <ResponseField name="author" type="object" required>
+    Author information
+    
+    <ResponseField name="id" type="integer" required>
+      Unique identifier for the author
+    </ResponseField>
+    
+    <ResponseField name="name" type="string" required>
+      Full name of the author
+    </ResponseField>
+  </ResponseField>
+  
+  <ResponseField name="status" type="string" required>
+    Current status of the book
+  </ResponseField>
+  
+  <ResponseField name="isbn" type="string | null">
+    International Standard Book Number
+  </ResponseField>
+  
+  <ResponseField name="file_format" type="string | null">
+    Format of the ebook file (e.g., "epub", "pdf")
+  </ResponseField>
+  
+  <ResponseField name="description" type="string | null">
+    Book description or synopsis
+  </ResponseField>
+  
+  <ResponseField name="page_count" type="integer | null">
+    Total number of pages in the book
+  </ResponseField>
+  
+  <ResponseField name="file_size" type="integer | null">
+    File size in bytes
+  </ResponseField>
+  
+  <ResponseField name="progress" type="object" required>
+    Reading progress information
+    
+    <ResponseField name="current_page" type="integer" required>
+      Current page number the user is on
+    </ResponseField>
+    
+    <ResponseField name="total_pages" type="integer | null">
+      Total number of pages (may differ from book.page_count)
+    </ResponseField>
+    
+    <ResponseField name="percentage_complete" type="number" required>
+      Progress as a percentage (0-100). For currently reading books, this is always > 0 and < 100.
+    </ResponseField>
+    
+    <ResponseField name="last_read_at" type="string" required>
+      Timestamp when the book was last read (ISO 8601 format)
+    </ResponseField>
+  </ResponseField>
+</ResponseField>
+
+### Example Response
+
+```json
+{
+  "books": [
+    {
+      "id": 12,
+      "name": "The Left Hand of Darkness",
+      "author": {
+        "id": 2,
+        "name": "Ursula K. Le Guin"
+      },
+      "status": "available",
+      "isbn": "9780441478125",
+      "file_format": "epub",
+      "description": "A groundbreaking work of science fiction.",
+      "page_count": 304,
+      "file_size": 524288,
+      "progress": {
+        "current_page": 156,
+        "total_pages": 304,
+        "percentage_complete": 51.32,
+        "last_read_at": "2026-03-04T14:22:00Z"
+      }
+    },
+    {
+      "id": 8,
+      "name": "Dune",
+      "author": {
+        "id": 5,
+        "name": "Frank Herbert"
+      },
+      "status": "available",
+      "isbn": "9780441172719",
+      "file_format": "pdf",
+      "description": "Set in the distant future amidst a feudal interstellar society.",
+      "page_count": 688,
+      "file_size": 2097152,
+      "progress": {
+        "current_page": 245,
+        "total_pages": 688,
+        "percentage_complete": 35.61,
+        "last_read_at": "2026-03-03T19:45:00Z"
+      }
+    }
+  ]
+}
+```
+
+## Implementation Details
+
+The endpoint filters reading progress records where:
+- `user_id` matches the authenticated user
+- `percentage_complete > 0 AND percentage_complete < 1`
+
+Results are ordered by `last_read_at` in descending order.
+
+## Status Codes
+
+- `200` - Success
+- `401` - Unauthorized (missing or invalid authentication)
+- `500` - Internal server error

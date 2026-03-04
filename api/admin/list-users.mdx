@@ -1,0 +1,112 @@
+---
+title: "List Users"
+description: "Retrieve a paginated list of all users in the system"
+---
+
+## Endpoint
+
+```
+GET /admin/users
+```
+
+## Authentication
+
+This endpoint requires admin authentication. Include a valid JWT token with admin privileges in the Authorization header.
+
+## Query Parameters
+
+Currently, pagination is hardcoded to page 1 with 20 items per page. Query parameter support is planned for future releases.
+
+## Response
+
+Returns a paginated list of users with their details (excluding password hashes).
+
+<ResponseField name="users" type="array">
+  Array of user objects
+  
+  <ResponseField name="id" type="integer">
+    Unique user identifier
+  </ResponseField>
+  
+  <ResponseField name="username" type="string | null">
+    Username (optional)
+  </ResponseField>
+  
+  <ResponseField name="email" type="string">
+    User's email address
+  </ResponseField>
+  
+  <ResponseField name="is_admin" type="boolean">
+    Whether the user has admin privileges
+  </ResponseField>
+  
+  <ResponseField name="created_at" type="string">
+    ISO 8601 timestamp of user creation
+  </ResponseField>
+</ResponseField>
+
+<ResponseField name="pagination" type="object">
+  Pagination metadata
+  
+  <ResponseField name="page" type="integer">
+    Current page number (1-indexed)
+  </ResponseField>
+  
+  <ResponseField name="limit" type="integer">
+    Number of items per page
+  </ResponseField>
+  
+  <ResponseField name="total" type="integer">
+    Total number of users
+  </ResponseField>
+  
+  <ResponseField name="pages" type="integer">
+    Total number of pages
+  </ResponseField>
+</ResponseField>
+
+## Example Request
+
+```bash
+curl -X GET http://localhost:3000/admin/users \
+  -H "Authorization: Bearer YOUR_ADMIN_JWT_TOKEN"
+```
+
+## Example Response
+
+```json
+{
+  "users": [
+    {
+      "id": 1,
+      "username": "admin",
+      "email": "admin@example.com",
+      "is_admin": true,
+      "created_at": "2024-01-15T10:30:00Z"
+    },
+    {
+      "id": 2,
+      "username": "john_doe",
+      "email": "john@example.com",
+      "is_admin": false,
+      "created_at": "2024-01-16T14:22:00Z"
+    }
+  ],
+  "pagination": {
+    "page": 1,
+    "limit": 20,
+    "total": 2,
+    "pages": 1
+  }
+}
+```
+
+## Error Responses
+
+<ResponseField name="401 Unauthorized">
+  Missing or invalid authentication token
+</ResponseField>
+
+<ResponseField name="403 Forbidden">
+  User does not have admin privileges
+</ResponseField>

@@ -1,0 +1,94 @@
+---
+title: "Refresh Metadata"
+description: "Refresh metadata for a specific book"
+---
+
+## Endpoint
+
+```
+POST /admin/books/:id/refresh-metadata
+```
+
+## Authentication
+
+This endpoint requires admin authentication. Include a valid JWT token with admin privileges in the Authorization header.
+
+## Path Parameters
+
+<ParamField path="id" type="integer" required>
+  The unique identifier of the book to refresh
+</ParamField>
+
+## Description
+
+Forces a metadata refresh for a specific book. This is useful when:
+
+- The book file has been updated externally
+- Initial metadata extraction was incomplete or incorrect
+- You want to re-extract metadata after fixing issues with the source file
+
+The system will re-read the book file and update all metadata fields including title, author, description, cover image, and other embedded metadata.
+
+## Request Body
+
+No request body is required.
+
+## Response
+
+<ResponseField name="success" type="boolean">
+  Whether the metadata refresh completed successfully
+</ResponseField>
+
+<ResponseField name="message" type="string">
+  Status message
+</ResponseField>
+
+<ResponseField name="book_id" type="integer">
+  The ID of the book that was refreshed
+</ResponseField>
+
+## Example Request
+
+```bash
+curl -X POST http://localhost:3000/admin/books/42/refresh-metadata \
+  -H "Authorization: Bearer YOUR_ADMIN_JWT_TOKEN"
+```
+
+## Example Response
+
+```json
+{
+  "success": true,
+  "message": "Metadata refreshed successfully",
+  "book_id": 42
+}
+```
+
+## Error Responses
+
+<ResponseField name="400 Bad Request">
+  Missing or invalid book ID
+</ResponseField>
+
+<ResponseField name="404 Not Found">
+  Book not found with the specified ID
+</ResponseField>
+
+<ResponseField name="500 Internal Server Error">
+  Failed to refresh metadata (file may be corrupt or inaccessible)
+</ResponseField>
+
+<ResponseField name="401 Unauthorized">
+  Missing or invalid authentication token
+</ResponseField>
+
+<ResponseField name="403 Forbidden">
+  User does not have admin privileges
+</ResponseField>
+
+## Notes
+
+- The metadata refresh operation reads the actual book file from disk
+- If the file has been moved or deleted, the operation will fail with a 500 error
+- Metadata extraction depends on the file format and quality of embedded metadata
+- Cover images are also re-extracted during the refresh process

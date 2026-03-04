@@ -1,0 +1,153 @@
+---
+title: "Get Author"
+description: "Retrieve detailed information about a specific author including their books"
+---
+
+## Endpoint
+
+```
+GET /books/authors/:id
+```
+
+Returns detailed information about a specific author along with all their books.
+
+## Authentication
+
+This endpoint requires authentication. Include your API token in the request headers.
+
+## Path Parameters
+
+<ParamField path="id" type="integer" required>
+  The unique identifier of the author
+</ParamField>
+
+## Request
+
+### Example Request
+
+```bash
+curl -X GET https://your-dust-server.com/books/authors/1 \
+  -H "Authorization: Bearer YOUR_API_TOKEN"
+```
+
+## Response
+
+Returns an author object with their books.
+
+<ResponseField name="id" type="integer" required>
+  Unique identifier for the author
+</ResponseField>
+
+<ResponseField name="name" type="string" required>
+  Full name of the author
+</ResponseField>
+
+<ResponseField name="biography" type="string | null">
+  Biography or description of the author
+</ResponseField>
+
+<ResponseField name="books" type="array" required>
+  Array of books written by this author
+  
+  <ResponseField name="id" type="integer" required>
+    Unique identifier for the book
+  </ResponseField>
+  
+  <ResponseField name="name" type="string" required>
+    Title of the book
+  </ResponseField>
+  
+  <ResponseField name="author" type="integer" required>
+    Author ID (foreign key)
+  </ResponseField>
+  
+  <ResponseField name="isbn" type="string | null">
+    International Standard Book Number
+  </ResponseField>
+  
+  <ResponseField name="publication_date" type="string | null">
+    Publication date of the book
+  </ResponseField>
+  
+  <ResponseField name="publisher" type="string | null">
+    Publisher name
+  </ResponseField>
+  
+  <ResponseField name="description" type="string | null">
+    Book description or synopsis
+  </ResponseField>
+  
+  <ResponseField name="page_count" type="integer | null">
+    Number of pages in the book
+  </ResponseField>
+  
+  <ResponseField name="file_size" type="integer | null">
+    File size in bytes
+  </ResponseField>
+  
+  <ResponseField name="file_format" type="string | null">
+    Format of the ebook file (e.g., "epub", "pdf")
+  </ResponseField>
+  
+  <ResponseField name="cover_image_path" type="string | null">
+    Path to the cover image
+  </ResponseField>
+  
+  <ResponseField name="status" type="string" required>
+    Current status of the book
+  </ResponseField>
+  
+  <ResponseField name="archived_at" type="string | null">
+    Timestamp when the book was archived (ISO 8601 format)
+  </ResponseField>
+  
+  <ResponseField name="archive_reason" type="string | null">
+    Reason for archiving the book
+  </ResponseField>
+  
+  <ResponseField name="created_at" type="string" required>
+    Timestamp when the book was added (ISO 8601 format)
+  </ResponseField>
+  
+  <ResponseField name="updated_at" type="string" required>
+    Timestamp when the book was last updated (ISO 8601 format)
+  </ResponseField>
+</ResponseField>
+
+### Example Response
+
+```json
+{
+  "id": 1,
+  "name": "Isaac Asimov",
+  "biography": "American writer and professor of biochemistry at Boston University.",
+  "books": [
+    {
+      "id": 5,
+      "name": "Foundation",
+      "author": 1,
+      "isbn": "9780553293357",
+      "publication_date": "1951-06-01",
+      "publisher": "Gnome Press",
+      "description": "The first novel in Isaac Asimov's Foundation series.",
+      "page_count": 255,
+      "file_size": 1048576,
+      "file_format": "epub",
+      "cover_image_path": "covers/5",
+      "status": "available",
+      "archived_at": null,
+      "archive_reason": null,
+      "created_at": "2024-01-15T10:30:00Z",
+      "updated_at": "2024-01-15T10:30:00Z"
+    }
+  ]
+}
+```
+
+## Status Codes
+
+- `200` - Success
+- `400` - Bad Request (missing or invalid author ID)
+- `401` - Unauthorized (missing or invalid authentication)
+- `404` - Author not found
+- `500` - Internal server error

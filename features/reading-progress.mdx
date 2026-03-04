@@ -1,0 +1,257 @@
+---
+title: Reading Progress
+description: Track your reading progress across all your devices
+---
+
+Dust automatically tracks your reading progress for every book, syncing your current page across all devices and maintaining a complete reading history.
+
+## How Progress Tracking Works
+
+Every time you read a book in Dust, your current position is saved to the database. This allows you to:
+
+- Resume reading from any device
+- See completion percentages for all your books
+- Track your reading history
+- Monitor which books you've started but not finished
+
+<Info>
+Reading progress is tracked per user, so multiple users on the same Dust server maintain separate progress for the same books.
+</Info>
+
+## Progress Data Model
+
+Dust stores comprehensive reading progress information:
+
+```zig
+pub const ReadingProgress = struct {
+    id: i64,
+    user_id: i64,              // Which user is reading
+    book_id: i64,              // Which book they're reading
+    current_page: i64,         // Current page number
+    total_pages: ?i64,         // Total pages (if known)
+    percentage_complete: f64,  // Calculated completion %
+    last_read_at: []const u8,  // Last reading timestamp
+    created_at: []const u8,    // When first opened
+    updated_at: []const u8,    // Last update time
+};
+```
+
+### Key Fields
+
+- **current_page**: The page you're currently on
+- **total_pages**: Total pages in the book (from metadata)
+- **percentage_complete**: Automatically calculated as `(current_page / total_pages) * 100`
+- **last_read_at**: Timestamp of your last reading session
+
+## Updating Progress
+
+Progress is automatically updated whenever you:
+
+1. Open a book
+2. Navigate to a different page
+3. Close a book
+4. Switch to a different book
+
+<Steps>
+  <Step title="Open a book">
+    When you open a book for the first time, Dust creates a new progress record with `current_page = 1`.
+  </Step>
+  
+  <Step title="Read and navigate">
+    As you read, your reader application sends page updates to Dust's API. Progress is saved immediately.
+  </Step>
+  
+  <Step title="Sync across devices">
+    Open the same book on a different device, and Dust automatically resumes from your last position.
+  </Step>
+</Steps>
+
+## Progress API
+
+Dust provides a REST API for managing reading progress:
+
+### Get Progress for a Book
+
+```http
+GET /api/books/:bookId/progress
+Authorization: Bearer <token>
+```
+
+Returns:
+```json
+{
+  "current_page": 142,
+  "total_pages": 352,
+  "percentage_complete": 40.34,
+  "last_read_at": "2024-01-15T14:32:00Z"
+}
+```
+
+### Update Progress
+
+```http
+PUT /api/books/:bookId/progress
+Authorization: Bearer <token>
+Content-Type: application/json
+
+{
+  "current_page": 143
+}
+```
+
+<Tip>
+Progress updates are idempotent—sending the same page multiple times won't create duplicate records.
+</Tip>
+
+## Reading Statistics
+
+Dust uses progress data to provide reading statistics:
+
+### Per-Book Stats
+
+- **Books started**: Any book with progress > 0%
+- **Books in progress**: Books with 0% < progress < 100%
+- **Books completed**: Books with progress ≥ 100%
+- **Average progress**: Mean completion across all books
+
+### User Stats
+
+- **Total reading time**: Calculated from session timestamps
+- **Books this month**: Books touched in the last 30 days
+- **Reading streak**: Consecutive days with reading activity
+- **Pages read today**: Sum of page increments in the last 24 hours
+
+## Progress Calculations
+
+Percentage completion is calculated automatically:
+
+```zig
+// Simplified calculation
+percentage_complete = (current_page / total_pages) * 100.0
+```
+
+### Handling Missing Total Pages
+
+For books without page count metadata:
+
+- Progress shows `current_page` only (no percentage)
+- The book appears in "Started" but not "X% Complete"
+- You can manually set total pages through the API
+
+<Note>
+EPUB files often don't have fixed page counts. Dust will estimate total pages based on file size and content when possible.
+</Note>
+
+## Multi-Device Sync
+
+Progress syncs seamlessly across devices:
+
+<Accordion title="How sync works">
+  1. **Device A** updates progress to page 50
+  2. Progress is saved to the Dust server immediately
+  3. **Device B** opens the same book
+  4. Dust sends the latest progress (page 50) to Device B
+  5. Device B's reader jumps to page 50
+</Accordion>
+
+<Accordion title="Conflict resolution">
+  If two devices update progress at nearly the same time:
+  
+  - The **most recent** `last_read_at` timestamp wins
+  - The update with the **higher page number** is preferred
+  - Conflicts are extremely rare due to timestamp precision
+</Accordion>
+
+## Progress History
+
+Dust maintains a complete history of your reading activity:
+
+```sql
+SELECT * FROM reading_progress 
+WHERE user_id = ?
+ORDER BY last_read_at DESC
+```
+
+This enables features like:
+
+- **Recently read**: Books ordered by `last_read_at`
+- **Reading timeline**: Visualization of reading activity over time
+- **Abandoned books**: Books started but not touched in 30+ days
+
+## Privacy and Data
+
+Reading progress is private and personal:
+
+- Each user's progress is isolated (users can't see each other's progress)
+- Progress data never leaves your self-hosted Dust server
+- No external tracking or analytics
+- You have complete control over your reading data
+
+## Progress Persistence
+
+Progress is preserved even when:
+
+- Books are archived
+- Metadata is refreshed
+- Files are moved (as long as the book ID doesn't change)
+
+<Warning>
+If you delete a book from the database entirely, its progress data is also deleted. Use archiving instead to preserve progress.
+</Warning>
+
+## Resume Reading Feature
+
+Dust's web interface shows all books with active progress:
+
+```
+Continue Reading
+─────────────────────────────────────────
+The Pragmatic Programmer     [=====>    ] 42%
+Last read: 2 hours ago
+
+Clean Code                   [========> ] 73%
+Last read: Yesterday
+
+Design Patterns              [=>        ] 15%
+Last read: 3 days ago
+```
+
+## Integration with Readers
+
+To integrate progress tracking into your reading application:
+
+<Steps>
+  <Step title="Authenticate">
+    Obtain a JWT token by logging in through Dust's auth API.
+  </Step>
+  
+  <Step title="Fetch current progress">
+    When opening a book, GET `/api/books/:id/progress` to resume at the correct page.
+  </Step>
+  
+  <Step title="Send updates">
+    As the user reads, periodically PUT progress updates. Update every page turn or every 30 seconds.
+  </Step>
+  
+  <Step title="Handle offline reading">
+    Cache progress locally and sync when connection is restored. Use `last_read_at` timestamps to resolve conflicts.
+  </Step>
+</Steps>
+
+## Best Practices
+
+<Tip>
+**Update frequently**: Send progress updates every page turn for best sync behavior.
+</Tip>
+
+<Tip>
+**Handle offline gracefully**: Cache progress locally and sync when online. The most recent timestamp wins.
+</Tip>
+
+<Tip>
+**Show visual progress**: Display progress bars and percentages to help users see their reading journey.
+</Tip>
+
+<Tip>
+**Respect privacy**: Never share reading progress between users without explicit permission.
+</Tip>

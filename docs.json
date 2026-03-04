@@ -1,122 +1,142 @@
 {
   "$schema": "https://mintlify.com/docs.json",
-  "theme": "mint",
-  "name": "Mint Starter Kit",
+  "name": "Dust",
+  "theme": "almond",
   "colors": {
-    "primary": "#16A34A",
-    "light": "#07C983",
-    "dark": "#15803D"
+    "primary": "#8B7355",
+    "light": "#D4C4B0",
+    "dark": "#5C4A3A"
   },
-  "favicon": "/favicon.svg",
+  "navbar": {
+    "primary": {
+      "type": "github",
+      "href": "https://github.com/dust-books/dust-server"
+    }
+  },
+  "footer": {
+    "socials": {
+      "github": "https://github.com/dust-books/dust-server"
+    }
+  },
   "navigation": {
     "tabs": [
       {
-        "tab": "Guides",
+        "tab": "Documentation",
         "groups": [
           {
-            "group": "Getting started",
+            "group": "Get Started",
             "pages": [
-              "index",
+              "introduction",
               "quickstart",
-              "development"
+              "installation"
             ]
           },
           {
-            "group": "Customization",
+            "group": "Setup & Configuration",
             "pages": [
-              "essentials/settings",
-              "essentials/navigation"
+              "setup/environment-variables",
+              "setup/library-structure",
+              "setup/docker-deployment",
+              "setup/systemd-service"
             ]
           },
           {
-            "group": "Writing content",
+            "group": "Core Features",
             "pages": [
-              "essentials/markdown",
-              "essentials/code",
-              "essentials/images",
-              "essentials/reusable-snippets"
+              "features/library-management",
+              "features/metadata-fetching",
+              "features/reading-progress",
+              "features/user-authentication",
+              "features/cover-art-management"
             ]
           },
           {
-            "group": "AI tools",
+            "group": "User Guide",
             "pages": [
-              "ai-tools/cursor",
-              "ai-tools/claude-code",
-              "ai-tools/windsurf"
+              "guides/organizing-books",
+              "guides/organizing-comics",
+              "guides/reading-interface",
+              "guides/admin-panel"
+            ]
+          },
+          {
+            "group": "Architecture",
+            "pages": [
+              "architecture/overview",
+              "architecture/server-architecture",
+              "architecture/client-architecture",
+              "architecture/database-schema"
+            ]
+          },
+          {
+            "group": "Contributing",
+            "pages": [
+              "contributing/getting-started",
+              "contributing/development-setup",
+              "contributing/code-style",
+              "contributing/release-process"
             ]
           }
         ]
       },
       {
-        "tab": "API reference",
+        "tab": "API Reference",
         "groups": [
           {
-            "group": "API documentation",
+            "group": "Overview",
             "pages": [
-              "api-reference/introduction"
+              "api/introduction",
+              "api/authentication"
             ]
           },
           {
-            "group": "Endpoint examples",
+            "group": "Books",
             "pages": [
-              "api-reference/endpoint/get",
-              "api-reference/endpoint/create",
-              "api-reference/endpoint/delete",
-              "api-reference/endpoint/webhook"
+              "api/books/list-books",
+              "api/books/get-book",
+              "api/books/stream-book",
+              "api/books/book-cover",
+              "api/books/reading-progress",
+              "api/books/tags",
+              "api/books/archive"
+            ]
+          },
+          {
+            "group": "Authors",
+            "pages": [
+              "api/authors/list-authors",
+              "api/authors/get-author"
+            ]
+          },
+          {
+            "group": "Reading Lists",
+            "pages": [
+              "api/reading/currently-reading",
+              "api/reading/completed"
+            ]
+          },
+          {
+            "group": "User Management",
+            "pages": [
+              "api/users/register",
+              "api/users/login",
+              "api/users/logout",
+              "api/users/profile"
+            ]
+          },
+          {
+            "group": "Admin",
+            "pages": [
+              "api/admin/list-users",
+              "api/admin/manage-user",
+              "api/admin/invitations",
+              "api/admin/auth-settings",
+              "api/admin/scan-library",
+              "api/admin/refresh-metadata"
             ]
           }
         ]
       }
-    ],
-    "global": {
-      "anchors": [
-        {
-          "anchor": "Documentation",
-          "href": "https://mintlify.com/docs",
-          "icon": "book-open-cover"
-        },
-        {
-          "anchor": "Blog",
-          "href": "https://mintlify.com/blog",
-          "icon": "newspaper"
-        }
-      ]
-    }
-  },
-  "logo": {
-    "light": "/logo/light.svg",
-    "dark": "/logo/dark.svg"
-  },
-  "navbar": {
-    "links": [
-      {
-        "label": "Support",
-        "href": "mailto:hi@mintlify.com"
-      }
-    ],
-    "primary": {
-      "type": "button",
-      "label": "Dashboard",
-      "href": "https://dashboard.mintlify.com"
-    }
-  },
-  "contextual": {
-    "options": [
-     "copy",
-     "view",
-     "chatgpt",
-     "claude",
-     "perplexity",
-     "mcp",
-     "cursor",
-     "vscode"
-   ]
-  },
-  "footer": {
-    "socials": {
-      "x": "https://x.com/mintlify",
-      "github": "https://github.com/mintlify",
-      "linkedin": "https://linkedin.com/company/mintlify"
-    }
+    ]
   }
 }

@@ -1,0 +1,309 @@
+---
+title: 'Book Tags'
+description: 'Manage tags and tag associations for books'
+---
+
+## List All Tags
+
+```
+GET /tags
+```
+
+Retrieve all tags available in the system.
+
+### Authentication
+
+No authentication required.
+
+### Response
+
+<ResponseField name="tags" type="array">
+  Array of tag objects
+  
+  <ResponseField name="id" type="integer">
+    Unique tag identifier
+  </ResponseField>
+  
+  <ResponseField name="name" type="string">
+    Tag name
+  </ResponseField>
+  
+  <ResponseField name="category" type="string">
+    Tag category (e.g., "genre", "style", "mood")
+  </ResponseField>
+  
+  <ResponseField name="description" type="string" optional>
+    Tag description
+  </ResponseField>
+  
+  <ResponseField name="color" type="string" optional>
+    Color code for UI display
+  </ResponseField>
+</ResponseField>
+
+### Example Request
+
+```bash
+curl https://your-dust-server.com/tags
+```
+
+### Example Response
+
+```json
+{
+  "tags": [
+    {
+      "id": 1,
+      "name": "Fiction",
+      "category": "genre",
+      "description": "Fictional works",
+      "color": "#3B82F6"
+    },
+    {
+      "id": 2,
+      "name": "Mystery",
+      "category": "genre",
+      "description": "Mystery and detective fiction",
+      "color": "#8B5CF6"
+    }
+  ]
+}
+```
+
+---
+
+## Get Tags by Category
+
+```
+GET /tags/categories/:category
+```
+
+Retrieve all tags within a specific category.
+
+### Authentication
+
+No authentication required.
+
+### Path Parameters
+
+<ParamField path="category" type="string" required>
+  The category name (e.g., "genre", "style", "mood")
+</ParamField>
+
+### Response
+
+<ResponseField name="tags" type="array">
+  Array of tag objects in the specified category
+  
+  <ResponseField name="id" type="integer">
+    Unique tag identifier
+  </ResponseField>
+  
+  <ResponseField name="name" type="string">
+    Tag name
+  </ResponseField>
+  
+  <ResponseField name="category" type="string">
+    Tag category
+  </ResponseField>
+</ResponseField>
+
+### Example Request
+
+```bash
+curl https://your-dust-server.com/tags/categories/genre
+```
+
+### Example Response
+
+```json
+{
+  "tags": [
+    {
+      "id": 1,
+      "name": "Fiction",
+      "category": "genre"
+    },
+    {
+      "id": 2,
+      "name": "Mystery",
+      "category": "genre"
+    },
+    {
+      "id": 5,
+      "name": "Science Fiction",
+      "category": "genre"
+    }
+  ]
+}
+```
+
+---
+
+## Add Tag to Book
+
+```
+POST /books/:id/tags
+```
+
+Add a tag to a specific book.
+
+### Authentication
+
+**Required.** Must include a valid JWT token in the Authorization header.
+
+### Path Parameters
+
+<ParamField path="id" type="integer" required>
+  The unique identifier of the book
+</ParamField>
+
+### Headers
+
+<ParamField header="Authorization" type="string" required>
+  Bearer token for authentication
+</ParamField>
+
+<ParamField header="Content-Type" type="string" required>
+  Must be `application/json`
+</ParamField>
+
+### Request Body
+
+<ParamField body="tag_name" type="string" required>
+  The name of the tag to add (tag must already exist in the system)
+</ParamField>
+
+### Response
+
+<ResponseField name="message" type="string">
+  Success message
+</ResponseField>
+
+### Example Request
+
+```bash
+curl -X POST \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." \
+  -H "Content-Type: application/json" \
+  -d '{"tag_name": "Fiction"}' \
+  https://your-dust-server.com/books/1/tags
+```
+
+### Example Response
+
+```json
+{
+  "message": "Tag added successfully"
+}
+```
+
+### Error Responses
+
+#### 400 Bad Request
+
+```json
+{
+  "error": "Invalid book ID"
+}
+```
+
+```json
+{
+  "error": "Invalid JSON"
+}
+```
+
+#### 401 Unauthorized
+
+```json
+{
+  "error": "Unauthorized"
+}
+```
+
+#### 404 Not Found
+
+```json
+{
+  "error": "Tag not found"
+}
+```
+
+---
+
+## Remove Tag from Book
+
+```
+DELETE /books/:id/tags/:tagName
+```
+
+Remove a tag from a specific book.
+
+### Authentication
+
+**Required.** Must include a valid JWT token in the Authorization header.
+
+### Path Parameters
+
+<ParamField path="id" type="integer" required>
+  The unique identifier of the book
+</ParamField>
+
+<ParamField path="tagName" type="string" required>
+  The name of the tag to remove
+</ParamField>
+
+### Headers
+
+<ParamField header="Authorization" type="string" required>
+  Bearer token for authentication
+</ParamField>
+
+### Response
+
+<ResponseField name="message" type="string">
+  Success message
+</ResponseField>
+
+### Example Request
+
+```bash
+curl -X DELETE \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." \
+  https://your-dust-server.com/books/1/tags/Fiction
+```
+
+### Example Response
+
+```json
+{
+  "message": "Tag removed successfully"
+}
+```
+
+### Error Responses
+
+#### 400 Bad Request
+
+```json
+{
+  "error": "Invalid book ID"
+}
+```
+
+#### 401 Unauthorized
+
+```json
+{
+  "error": "Unauthorized"
+}
+```
+
+#### 404 Not Found
+
+```json
+{
+  "error": "Tag not found"
+}
+```

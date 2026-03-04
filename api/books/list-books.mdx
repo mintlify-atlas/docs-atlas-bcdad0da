@@ -1,0 +1,132 @@
+---
+title: 'List Books'
+description: 'Retrieve a list of all active books in your library'
+---
+
+## Endpoint
+
+```
+GET /books
+```
+
+Returns a list of all active (non-archived) books in the library with their associated authors.
+
+## Authentication
+
+No authentication required.
+
+## Response
+
+Returns an object containing an array of books.
+
+<ResponseField name="books" type="array">
+  Array of book objects
+  
+  <ResponseField name="id" type="integer">
+    Unique identifier for the book
+  </ResponseField>
+  
+  <ResponseField name="name" type="string">
+    Book title
+  </ResponseField>
+  
+  <ResponseField name="author" type="object">
+    Author information
+    
+    <ResponseField name="id" type="integer">
+      Author's unique identifier
+    </ResponseField>
+    
+    <ResponseField name="name" type="string">
+      Author's name
+    </ResponseField>
+  </ResponseField>
+  
+  <ResponseField name="isbn" type="string" optional>
+    ISBN number
+  </ResponseField>
+  
+  <ResponseField name="publication_date" type="string" optional>
+    Date of publication
+  </ResponseField>
+  
+  <ResponseField name="publisher" type="string" optional>
+    Publisher name
+  </ResponseField>
+  
+  <ResponseField name="description" type="string" optional>
+    Book description
+  </ResponseField>
+  
+  <ResponseField name="page_count" type="integer" optional>
+    Number of pages
+  </ResponseField>
+  
+  <ResponseField name="file_size" type="integer" optional>
+    File size in bytes
+  </ResponseField>
+  
+  <ResponseField name="file_format" type="string" optional>
+    Format of the book file (e.g., "epub", "pdf")
+  </ResponseField>
+  
+  <ResponseField name="cover_image_path" type="string" optional>
+    Relative path to the book cover (e.g., "covers/123")
+  </ResponseField>
+  
+  <ResponseField name="status" type="string">
+    Book status ("active" for this endpoint)
+  </ResponseField>
+  
+  <ResponseField name="archived_at" type="string" optional>
+    Timestamp when the book was archived (null for active books)
+  </ResponseField>
+  
+  <ResponseField name="archive_reason" type="string" optional>
+    Reason for archiving (null for active books)
+  </ResponseField>
+  
+  <ResponseField name="created_at" type="string">
+    Timestamp when the book was added to the library
+  </ResponseField>
+  
+  <ResponseField name="updated_at" type="string">
+    Timestamp of last update
+  </ResponseField>
+</ResponseField>
+
+## Example Request
+
+```bash
+curl https://your-dust-server.com/books
+```
+
+## Example Response
+
+```json
+{
+  "books": [
+    {
+      "id": 1,
+      "name": "The Great Gatsby",
+      "author": {
+        "id": 5,
+        "name": "F. Scott Fitzgerald"
+      },
+      "isbn": "9780743273565",
+      "publication_date": "1925-04-10",
+      "publisher": "Charles Scribner's Sons",
+      "description": "A novel set in the Jazz Age that tells the story of Jay Gatsby's pursuit of Daisy Buchanan.",
+      "page_count": 180,
+      "file_size": 2456789,
+      "file_format": "epub",
+      "cover_image_path": "covers/1",
+      "status": "active",
+      "archived_at": null,
+      "archive_reason": null,
+      "created_at": "2024-01-15T10:30:00Z",
+      "updated_at": "2024-01-15T10:30:00Z"
+    }
+  ]
+}
+```

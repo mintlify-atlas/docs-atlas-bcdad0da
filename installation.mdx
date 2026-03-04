@@ -1,0 +1,652 @@
+---
+title: Installation
+description: Comprehensive installation guide for Dust media server covering automated scripts, Docker, and building from source.
+---
+
+Dust supports multiple installation methods to fit your infrastructure and preferences. This guide covers all available options in detail.
+
+## System Requirements
+
+Before installing, ensure your system meets these requirements:
+
+### Minimum Requirements
+
+- **CPU**: x86_64 or aarch64 (ARM64) processor
+- **RAM**: 256MB minimum (512MB recommended)
+- **Storage**: 100MB for application + space for database and media
+- **OS**: Linux (Ubuntu 20.04+, Debian 10+, or any modern distribution)
+
+### Supported Architectures
+
+- `linux-x86_64` (Intel/AMD 64-bit)
+- `linux-aarch64` (ARM 64-bit, including Raspberry Pi 4+)
+
+<Note>
+  SQLite is bundled with the Dust binary. No separate database installation is required.
+</Note>
+
+## Method 1: Automated Installation Script
+
+The recommended installation method for Ubuntu and Debian-based systems.
+
+### Features
+
+The installation script provides:
+
+- Automatic architecture detection
+- Latest release download from GitHub
+- Runtime dependency installation (musl)
+- System user and permission setup
+- Systemd service configuration
+- Automatic JWT secret generation
+- Interactive or non-interactive modes
+
+### Interactive Installation
+
+Download and run the script to customize settings during installation:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/dust-books/dust-server/main/scripts/install.sh -o /tmp/install-dust.sh
+sudo bash /tmp/install-dust.sh
+```
+
+You'll be prompted for:
+
+1. **Media directories**: Colon-separated paths (e.g., `/media/books:/media/comics`)
+2. **Server port**: Default is 4001
+3. **Service restart confirmation** (if updating existing installation)
+
+### Non-Interactive Installation
+
+For automation or scripting, pipe directly to bash:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/dust-books/dust-server/main/scripts/install.sh | sudo bash
+```
+
+This uses defaults:
+- Media directories: `/media/books:/media/comics`
+- Port: `4001`
+- Database: `/opt/dust/data/dust.db`
+
+You can modify these later in `/opt/dust/.env`.
+
+### What Gets Installed
+
+The script performs these actions:
+
+<Steps>
+  <Step title="Dependency Check">
+    Verifies required tools are installed:
+    - `curl` - For downloading releases
+    - `tar` - For extracting archives
+    - `systemctl` - For service management
+    - `openssl` - For JWT secret generation
+  </Step>
+  
+  <Step title="Runtime Dependencies">
+    Installs system packages:
+    - `musl` - Required C library for the Zig binary
+    
+    Note: SQLite is statically linked in the binary
+  </Step>
+  
+  <Step title="User Creation">
+    Creates a dedicated system user:
+    - Username: `dust`
+    - Home directory: `/opt/dust`
+    - No login shell for security
+  </Step>
+  
+  <Step title="Binary Installation">
+    Downloads and extracts:
+    - Latest release from GitHub
+    - Installs to `/opt/dust/dust-server`
+    - Sets executable permissions
+    - Changes ownership to `dust:dust`
+  </Step>
+  
+  <Step title="Environment Configuration">
+    Creates `/opt/dust/.env` with:
+    - Auto-generated JWT secret
+    - Configured media directories
+    - Server port
+    - Database path
+    - Scan intervals
+  </Step>
+  
+  <Step title="Permission Setup">
+    Configures access to media directories using:
+    - ACLs (Access Control Lists) if available
+    - Group membership fallback
+    - Read-only access to prevent accidental modifications
+  </Step>
+  
+  <Step title="Systemd Service">
+    Creates `/etc/systemd/system/dust-server.service` with:
+    - Auto-start on boot
+    - Automatic restart on failure
+    - Security hardening (PrivateTmp, ProtectSystem, etc.)
+    - Logging to systemd journal
+  </Step>
+</Steps>
+
+### Installation Locations
+
+After installation:
+
+| Component | Path |
+|-----------|------|
+| Binary | `/opt/dust/dust-server` |
+| Configuration | `/opt/dust/.env` |
+| Database | `/opt/dust/data/dust.db` |
+| Service file | `/etc/systemd/system/dust-server.service` |
+| Logs | `journalctl -u dust-server` |
+
+### Post-Installation
+
+After the script completes:
+
+```bash
+# Verify service is running
+sudo systemctl status dust-server
+
+# View logs
+sudo journalctl -u dust-server -f
+
+# Test the server
+curl http://localhost:4001/health
+```
+
+## Method 2: Docker
+
+Docker provides a containerized, portable deployment option.
+
+### Using Docker Compose (Recommended)
+
+Create a `docker-compose.yml` file:
+
+```yaml docker-compose.yml
+services:
+  dust-server:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "4001:4001"
+    environment:
+      - PORT=4001
+      - DATABASE_URL=file:/app/data/dust.db
+      - DUST_DIRS=/app/books:/app/comics
+      - JWT_SECRET=${JWT_SECRET}
+      # Optional: Google Books API for enhanced metadata
+      # - GOOGLE_BOOKS_API_KEY=your_api_key_here
+    volumes:
+      # Mount your book directories (read-only recommended)
+      - ./books:/app/books:ro
+      - ./comics:/app/comics:ro
+      # Persistent database storage
+      - dust_data:/app/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+volumes:
+  dust_data:
+    driver: local
+```
+
+Create a `.env` file with your JWT secret:
+
+```bash
+echo "JWT_SECRET=$(openssl rand -base64 32)" > .env
+```
+
+Start the container:
+
+```bash
+docker-compose up -d
+```
+
+### Using Docker CLI
+
+For a simpler setup without compose:
+
+```bash
+# Generate JWT secret
+JWT_SECRET=$(openssl rand -base64 32)
+
+# Run container
+docker run -d \
+  --name dust-server \
+  -p 4001:4001 \
+  -v /path/to/books:/app/books:ro \
+  -v /path/to/comics:/app/comics:ro \
+  -v dust_data:/app/data \
+  -e JWT_SECRET="$JWT_SECRET" \
+  -e DUST_DIRS="/app/books:/app/comics" \
+  -e PORT=4001 \
+  --restart unless-stopped \
+  dust-server:latest
+```
+
+### Building the Docker Image
+
+The included Dockerfile uses multi-stage builds for optimal size:
+
+```dockerfile Dockerfile
+# Build stage
+FROM alpine:3.19 AS builder
+
+# Install Zig, Node.js and dependencies
+RUN apk add --no-cache wget xz curl sqlite-dev nodejs npm
+
+# Install Zig 0.15.2
+RUN wget https://ziglang.org/download/0.15.2/zig-linux-x86_64-0.15.2.tar.xz && \
+    tar -xf zig-linux-x86_64-0.15.2.tar.xz && \
+    mv zig-linux-x86_64-0.15.2 /usr/local/zig && \
+    ln -s /usr/local/zig/zig /usr/local/bin/zig
+
+WORKDIR /app
+
+# Build client
+COPY client/package*.json ./client/
+WORKDIR /app/client
+RUN npm ci
+COPY client/ ./
+RUN npm run build
+
+# Build server
+WORKDIR /app
+COPY build.zig build.zig.zon ./
+COPY src ./src
+RUN zig build -Doptimize=ReleaseSafe
+
+# Runtime stage
+FROM alpine:3.19
+
+RUN apk add --no-cache sqlite-libs curl
+
+# Create app user
+RUN addgroup -g 1000 dustapp && \
+    adduser -D -u 1000 -G dustapp dustapp
+
+WORKDIR /app
+
+# Copy artifacts
+COPY --from=builder /app/zig-out/bin/dust-server /app/dust-server
+COPY --from=builder /app/client/dist /app/client/dist
+
+# Setup data directory
+RUN mkdir -p /app/data && chown -R dustapp:dustapp /app/data
+
+ENV PORT=4001
+ENV DATABASE_URL=file:/app/data/dust.db
+
+EXPOSE 4001
+
+USER dustapp
+
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+  CMD curl -f http://localhost:4001/health || exit 1
+
+CMD ["/app/dust-server"]
+```
+
+Build the image:
+
+```bash
+docker build -t dust-server:latest .
+```
+
+### Docker Environment Variables
+
+All standard Dust environment variables work in Docker:
+
+| Variable | Required | Default | Description |
+|----------|----------|---------|-------------|
+| `JWT_SECRET` | **Yes** | - | Authentication secret (use `openssl rand -base64 32`) |
+| `DUST_DIRS` | No | - | Colon-separated container paths to scan |
+| `PORT` | No | `4001` | Internal container port |
+| `DATABASE_URL` | No | `file:/app/data/dust.db` | Database path |
+| `SCAN_INTERVAL_MINUTES` | No | `5` | Library scan frequency |
+| `CLEANUP_INTERVAL_MINUTES` | No | `60` | Cleanup task frequency |
+| `GOOGLE_BOOKS_API_KEY` | No | - | Google Books API key |
+
+<Warning>
+  When using Docker, ensure your volume mounts match the paths specified in `DUST_DIRS`. For example, if you mount books to `/app/books`, set `DUST_DIRS=/app/books`.
+</Warning>
+
+## Method 3: Build from Source
+
+For development or custom builds.
+
+### Prerequisites
+
+- Zig 0.15.2 or later
+- Git
+- OpenSSL (for JWT secret generation)
+
+### Step-by-Step Build
+
+<Steps>
+  <Step title="Install Zig">
+    Download and install Zig 0.15.2:
+    
+    ```bash
+    # For x86_64
+    wget https://ziglang.org/download/0.15.2/zig-linux-x86_64-0.15.2.tar.xz
+    tar -xf zig-linux-x86_64-0.15.2.tar.xz
+    sudo mv zig-linux-x86_64-0.15.2 /usr/local/zig
+    sudo ln -s /usr/local/zig/zig /usr/local/bin/zig
+    
+    # Verify installation
+    zig version
+    ```
+    
+    For aarch64, download the appropriate archive from [ziglang.org](https://ziglang.org/download/).
+  </Step>
+  
+  <Step title="Clone Repository">
+    ```bash
+    git clone https://github.com/dust-books/dust-server.git
+    cd dust-server
+    ```
+  </Step>
+  
+  <Step title="Build the Binary">
+    Build in release mode for production:
+    
+    ```bash
+    zig build -Doptimize=ReleaseSafe
+    ```
+    
+    The binary will be created at `zig-out/bin/dust-server`.
+    
+    For debug builds:
+    
+    ```bash
+    zig build
+    ```
+  </Step>
+  
+  <Step title="Set Up Environment">
+    Create a `.env` file in your working directory:
+    
+    ```bash .env
+    # Required
+    JWT_SECRET=your-secure-random-string-here
+    
+    # Library directories (colon-separated)
+    DUST_DIRS=/media/books:/media/comics
+    
+    # Server configuration
+    PORT=4001
+    DATABASE_URL=file:./dust.db
+    
+    # Background tasks (in minutes)
+    SCAN_INTERVAL_MINUTES=5
+    CLEANUP_INTERVAL_MINUTES=60
+    
+    # Optional: Google Books API
+    # GOOGLE_BOOKS_API_KEY=your-api-key
+    ```
+    
+    Generate a secure JWT secret:
+    
+    ```bash
+    openssl rand -base64 32
+    ```
+  </Step>
+  
+  <Step title="Run the Server">
+    Load environment variables and start:
+    
+    ```bash
+    export $(cat .env | xargs)
+    ./zig-out/bin/dust-server
+    ```
+    
+    Or run directly:
+    
+    ```bash
+    JWT_SECRET=$(openssl rand -base64 32) \
+    DUST_DIRS=/media/books:/media/comics \
+    PORT=4001 \
+    ./zig-out/bin/dust-server
+    ```
+  </Step>
+</Steps>
+
+### Build Options
+
+The Zig build system supports several options:
+
+```bash
+# Show all available options
+zig build --help
+
+# Build with optimizations
+zig build -Doptimize=ReleaseSafe  # Recommended for production
+zig build -Doptimize=ReleaseFast  # Maximum performance
+zig build -Doptimize=ReleaseSmall # Smallest binary size
+
+# Run tests
+zig build test
+
+# Build and run
+zig build run
+
+# Build for specific target
+zig build -Dtarget=aarch64-linux
+```
+
+### Project Structure
+
+Understanding the source code layout:
+
+```
+dust-server/
+├── src/
+│   ├── main.zig              # Entry point
+│   ├── server.zig            # HTTP server setup
+│   ├── config.zig            # Configuration management
+│   ├── database.zig          # SQLite wrapper
+│   ├── scanner.zig           # Library scanning logic
+│   ├── metadata_extractor.zig # File metadata parsing
+│   ├── openlibrary.zig       # OpenLibrary API client
+│   ├── cover_manager.zig     # Cover art handling
+│   ├── auth/                 # Authentication & authorization
+│   ├── middleware/           # HTTP middleware
+│   └── modules/              # Feature modules
+│       ├── books/            # Book management
+│       ├── users/            # User management
+│       └── admin/            # Admin endpoints
+├── build.zig                 # Build configuration
+├── build.zig.zon            # Dependencies
+├── Dockerfile                # Container build
+└── scripts/
+    └── install.sh            # Installation script
+```
+
+### Dependencies
+
+Dust uses these Zig packages (automatically fetched during build):
+
+- **httpz** (v0.0.0): HTTP server framework by karlseguin
+- **sqlite** (v3.48.0): SQLite bindings for Zig
+
+Dependencies are declared in `build.zig.zon`:
+
+```zig build.zig.zon
+.{
+    .name = .dustserver,
+    .version = "0.9.5",
+    .minimum_zig_version = "0.15.2",
+    
+    .dependencies = .{
+        .httpz = .{
+            .url = "git+https://github.com/karlseguin/http.zig?ref=master#...",
+            .hash = "...",
+        },
+        .sqlite = .{
+            .url = "git+https://github.com/vrischmann/zig-sqlite?ref=zig-0.15.1#...",
+            .hash = "...",
+        },
+    },
+}
+```
+
+## Upgrading Dust
+
+### Upgrade with Install Script
+
+The installation script detects existing installations and performs an upgrade:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/dust-books/dust-server/main/scripts/install.sh | sudo bash
+```
+
+The script will:
+1. Stop the running service
+2. Download the latest release
+3. Replace the binary
+4. Preserve your configuration in `.env`
+5. Restart the service
+
+### Upgrade Docker
+
+```bash
+# Pull latest image
+docker pull dust-server:latest
+
+# Restart with new image
+docker-compose down
+docker-compose up -d
+```
+
+### Upgrade from Source
+
+```bash
+cd dust-server
+git pull origin main
+zig build -Doptimize=ReleaseSafe
+
+# If running as systemd service
+sudo systemctl restart dust-server
+```
+
+<Note>
+  Database migrations run automatically on startup. Your data and configuration are preserved during upgrades.
+</Note>
+
+## Uninstalling Dust
+
+### Remove systemd Installation
+
+```bash
+# Stop and disable service
+sudo systemctl stop dust-server
+sudo systemctl disable dust-server
+
+# Remove service file
+sudo rm /etc/systemd/system/dust-server.service
+sudo systemctl daemon-reload
+
+# Remove installation directory
+sudo rm -rf /opt/dust
+
+# Remove system user (optional)
+sudo userdel dust
+```
+
+### Remove Docker Installation
+
+```bash
+# Stop and remove containers
+docker-compose down
+
+# Remove volumes (deletes database!)
+docker-compose down -v
+
+# Remove images
+docker rmi dust-server:latest
+```
+
+## Troubleshooting Installation
+
+<AccordionGroup>
+  <Accordion title="Architecture not supported">
+    If you see "Unsupported architecture" error:
+    
+    - Verify your architecture: `uname -m`
+    - Supported: `x86_64`, `aarch64`
+    - For other architectures, build from source with cross-compilation
+  </Accordion>
+  
+  <Accordion title="Failed to download release">
+    Check:
+    - Internet connectivity
+    - GitHub availability
+    - Firewall rules
+    
+    Alternatively, manually download from [GitHub Releases](https://github.com/dust-books/dust-server/releases)
+  </Accordion>
+  
+  <Accordion title="Permission denied during installation">
+    Ensure you're running the script with sudo:
+    
+    ```bash
+    sudo bash /tmp/install-dust.sh
+    ```
+  </Accordion>
+  
+  <Accordion title="Service fails to start">
+    Check logs for specific errors:
+    
+    ```bash
+    sudo journalctl -u dust-server -n 100 --no-pager
+    ```
+    
+    Common issues:
+    - Missing `JWT_SECRET` in `/opt/dust/.env`
+    - Invalid paths in `DUST_DIRS`
+    - Port already in use
+    - Media directory permission issues
+  </Accordion>
+  
+  <Accordion title="Zig compilation errors">
+    When building from source:
+    
+    - Ensure Zig version is exactly 0.15.2
+    - Clear build cache: `rm -rf zig-cache zig-out`
+    - Check for missing system dependencies
+    - Verify build.zig.zon dependencies
+  </Accordion>
+</AccordionGroup>
+
+## Next Steps
+
+After successful installation:
+
+<CardGroup cols={2}>
+  <Card title="Configuration" icon="gear" href="/setup/environment-variables">
+    Learn about all environment variables and configuration options
+  </Card>
+  
+  <Card title="Library Setup" icon="books" href="/setup/library-structure">
+    Organize your books and comics for optimal metadata detection
+  </Card>
+  
+  <Card title="User Management" icon="users" href="/features/user-authentication">
+    Set up users, roles, and permissions
+  </Card>
+  
+  <Card title="API Reference" icon="code" href="/api/introduction">
+    Explore the REST API for integrations
+  </Card>
+</CardGroup>

@@ -1,0 +1,157 @@
+---
+title: Architecture Overview
+description: High-level overview of Dust's architecture and design principles
+---
+
+Dust is a self-hosted media server for ebooks and comics built with Zig on the backend and Lit (Web Components) on the frontend. The system follows a modular, layered architecture with clear separation between server and client components.
+
+## System Architecture
+
+Dust consists of two main components:
+
+1. **Server (Zig)** - Backend API server with SQLite database
+2. **Client (TypeScript/Lit)** - Web-based frontend application
+
+```
+┌─────────────────────────────────────────┐
+│           Client (Browser)              │
+│  ┌───────────────────────────────────┐  │
+│  │  Lit Web Components               │  │
+│  │  - dust-app, dust-library         │  │
+│  │  - PDF/EPUB readers               │  │
+│  └───────────────────────────────────┘  │
+│           ↓ HTTP/REST API                │
+└─────────────────────────────────────────┘
+               ↓
+┌─────────────────────────────────────────┐
+│        Zig Server (httpz)               │
+│  ┌───────────────────────────────────┐  │
+│  │  Modules                          │  │
+│  │  - users (auth, permissions)      │  │
+│  │  - books (library, metadata)      │  │
+│  │  - genres (categorization)        │  │
+│  └───────────────────────────────────┘  │
+│  ┌───────────────────────────────────┐  │
+│  │  Services                         │  │
+│  │  - scanner, metadata extractor    │  │
+│  │  - cover manager, static files    │  │
+│  └───────────────────────────────────┘  │
+└─────────────────────────────────────────┘
+               ↓
+┌─────────────────────────────────────────┐
+│        SQLite Database                  │
+│  - Users & Permissions                  │
+│  - Books, Authors, Tags                 │
+│  - Reading Progress                     │
+└─────────────────────────────────────────┘
+```
+
+## Design Principles
+
+### Self-Hosted First
+Dust is designed to run on your own hardware, giving you complete control over your library and data. No external dependencies or cloud services required.
+
+### Modular Architecture
+The server is organized into modules (`src/modules/`) that handle distinct domains:
+- **users** - Authentication, authorization, roles, permissions
+- **books** - Library management, metadata, reading progress
+- **admin** - Administrative functions
+
+Each module contains its own migrations, models, routes, and business logic.
+
+### Progressive Enhancement
+The client uses Web Components (Lit) for a modern, component-based UI that works in any browser without a build step for development.
+
+### Background Processing
+Long-running tasks like library scanning and metadata fetching run in the background using a timer-based task system (`src/timer.zig`).
+
+## Technology Stack
+
+### Server
+- **Language**: Zig 0.13+
+- **HTTP Server**: [httpz](https://github.com/karlseguin/http.zig)
+- **Database**: SQLite via [zig-sqlite](https://github.com/vrischmann/zig-sqlite)
+- **Authentication**: JWT tokens (HS256)
+
+### Client
+- **Framework**: [Lit](https://lit.dev/) (Web Components)
+- **Language**: TypeScript
+- **PDF Reader**: [PDF.js](https://mozilla.github.io/pdf.js/)
+- **EPUB Reader**: [epub.js](https://github.com/futurepress/epub.js/)
+- **Build Tool**: Vite
+
+## Key Features
+
+<Info>
+Dust supports both PDF and EPUB formats with built-in readers, reading progress tracking, and metadata management.
+</Info>
+
+### Library Management
+- Automatic scanning of configured directories
+- Metadata extraction from files and external APIs (Open Library, Google Books)
+- Cover image management and caching
+- Tagging and categorization
+
+### User Management
+- Role-based access control (RBAC)
+- Permission system for fine-grained access
+- JWT-based authentication
+- Multi-user support with reading progress per user
+
+### Reading Experience
+- In-browser PDF and EPUB readers
+- Reading progress tracking
+- Currently reading / completed lists
+- Responsive design for mobile and desktop
+
+## Configuration
+
+Dust is configured through environment variables defined in `src/config.zig:5-15`:
+
+```bash
+# Required
+JWT_SECRET=your-secret-key
+
+# Optional
+PORT=4001
+DUST_DIRS=/path/to/books:/path/to/comics
+DATABASE_URL=dust.db
+SCAN_INTERVAL_MINUTES=5
+CLEANUP_INTERVAL_MINUTES=60
+GOOGLE_BOOKS_API_KEY=optional-api-key
+```
+
+## File Structure
+
+```
+dust/
+├── src/                    # Server source code
+│   ├── main.zig           # Entry point
+│   ├── server.zig         # HTTP server setup
+│   ├── database.zig       # Database connection
+│   ├── modules/           # Feature modules
+│   │   ├── users/
+│   │   ├── books/
+│   │   └── admin/
+│   ├── auth/              # JWT & permissions
+│   └── middleware/        # Request middleware
+├── client/                # Frontend application
+│   └── src/
+│       ├── components/    # Lit components
+│       └── services/      # API & state management
+└── build.zig              # Build configuration
+```
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Server Architecture" icon="server" href="/architecture/server-architecture">
+    Deep dive into the Zig backend architecture
+  </Card>
+  <Card title="Client Architecture" icon="browser" href="/architecture/client-architecture">
+    Explore the Lit-based frontend design
+  </Card>
+  <Card title="Database Schema" icon="database" href="/architecture/database-schema">
+    Understand the SQLite database structure
+  </Card>
+</CardGroup>

@@ -1,0 +1,373 @@
+---
+title: Cover Art Management
+description: Automatically discover, download, and serve book cover images
+---
+
+Dust automatically manages cover art for your library, finding local cover images and downloading them from external sources when available.
+
+## How Cover Management Works
+
+When adding books to your library, Dust follows a smart process to ensure every book has cover art:
+
+<Steps>
+  <Step title="Check for local covers">
+    First, Dust searches the book's directory for existing cover images.
+  </Step>
+  
+  <Step title="Download from metadata sources">
+    If no local cover exists and OpenLibrary provides a cover URL, Dust downloads it automatically.
+  </Step>
+  
+  <Step title="Store covers locally">
+    Downloaded covers are saved alongside the book file for fast access.
+  </Step>
+  
+  <Step title="Serve covers via API">
+    Cover images are served through Dust's API with proper caching headers.
+  </Step>
+</Steps>
+
+## Local Cover Discovery
+
+Dust automatically searches for cover images in your book directories using intelligent filename matching.
+
+### Standard Cover Filenames
+
+Dust looks for these common cover image names (case-insensitive):
+
+```
+cover.jpg
+cover.jpeg
+cover.png
+cover.webp
+folder.jpg
+folder.jpeg  
+folder.png
+folder.webp
+```
+
+<Info>
+Place a `cover.jpg` file in the same directory as your ebook, and Dust will automatically use it.
+</Info>
+
+### Book-Specific Covers
+
+For more specific matching, Dust also checks for covers named after the book file:
+
+```
+book-title.epub          → book-title_cover.jpg
+1984.pdf                 → 1984_cover.png
+the-pragmatic-programmer.mobi → the-pragmatic-programmer_cover.webp
+```
+
+### Supported Image Formats
+
+- **JPEG**: `.jpg`, `.jpeg`
+- **PNG**: `.png`
+- **WebP**: `.webp`
+
+All formats are supported for both local discovery and downloads.
+
+## Automatic Cover Downloads
+
+When metadata is enriched from OpenLibrary, Dust automatically downloads cover images.
+
+### Download Process
+
+```zig
+pub fn ensureCover(
+    self: *CoverManager,
+    book_path: []const u8,
+    download_url: ?[]const u8
+) !?[]const u8 {
+    // First check for local cover
+    if (try self.findLocalCover(book_path)) |existing| {
+        return existing;
+    }
+    
+    // Download if URL provided
+    if (download_url) |url| {
+        return self.downloadCover(book_path, url);
+    }
+    
+    return null;
+}
+```
+
+<Accordion title="Download behavior">
+  - Covers are downloaded to the same directory as the book
+  - File extension is inferred from the URL (falls back to .jpg)
+  - Downloads have a 5MB size limit for safety
+  - Failed downloads are logged but don't stop book import
+  - Downloaded covers are named `cover.{ext}` for consistency
+</Accordion>
+
+### OpenLibrary Cover URLs
+
+OpenLibrary provides multiple cover sizes:
+
+```json
+{
+  "cover": {
+    "large": "https://covers.openlibrary.org/b/id/12345-L.jpg",
+    "medium": "https://covers.openlibrary.org/b/id/12345-M.jpg",
+    "small": "https://covers.openlibrary.org/b/id/12345-S.jpg"
+  }
+}
+```
+
+Dust prefers:
+1. **Large** covers (best quality)
+2. **Medium** covers (if large unavailable)
+3. **Small** covers (last resort)
+
+<Tip>
+Large covers are typically 300-400px wide, perfect for modern displays.
+</Tip>
+
+## Cover Storage
+
+Covers are stored in two locations:
+
+### Filesystem Storage
+
+Physical image files alongside your books:
+
+```
+/library/books/
+├── Author/
+│   ├── Book Title/
+│   │   ├── book.epub
+│   │   └── cover.jpg     ← Cover image stored here
+```
+
+### Database References
+
+The database stores the path to each cover:
+
+```sql
+CREATE TABLE books (
+    id INTEGER PRIMARY KEY,
+    name TEXT NOT NULL,
+    cover_image_path TEXT,  -- Full path to cover file
+    ...
+);
+```
+
+<Note>
+Cover images are referenced by path, not stored as BLOBs. This keeps the database small and makes covers easy to manage.
+</Note>
+
+## Serving Cover Images
+
+Dust serves cover images through a dedicated API endpoint:
+
+```http
+GET /api/books/:bookId/cover
+Authorization: Bearer <token>
+```
+
+Response:
+- **Status 200**: Image binary data with appropriate `Content-Type` header
+- **Status 404**: No cover available for this book
+
+### Cover Image Caching
+
+Dust includes cache headers for optimal performance:
+
+```http
+HTTP/1.1 200 OK
+Content-Type: image/jpeg
+Cache-Control: public, max-age=86400
+ETag: "abc123..."
+```
+
+This allows browsers and CDNs to cache cover images for 24 hours.
+
+## Cover Refresh
+
+Covers can be refreshed along with metadata:
+
+<Steps>
+  <Step title="Trigger metadata refresh">
+    Call the refresh metadata API for a specific book.
+  </Step>
+  
+  <Step title="Re-check local covers">
+    Dust searches for new local cover files you may have added.
+  </Step>
+  
+  <Step title="Re-download from OpenLibrary">
+    If metadata includes an updated cover URL, it's downloaded again.
+  </Step>
+</Steps>
+
+```http
+POST /api/books/:bookId/refresh-metadata
+Authorization: Bearer <admin-token>
+```
+
+<Warning>
+Refreshing metadata will replace existing covers if a new one is found. Back up custom covers before refreshing.
+</Warning>
+
+## Managing Custom Covers
+
+You can provide your own cover images:
+
+### Option 1: File System
+
+Simply place a cover image in the book's directory:
+
+```bash
+cd /library/books/Author/Book
+wget https://example.com/better-cover.jpg -O cover.jpg
+```
+
+On the next scan or metadata refresh, Dust will use your custom cover.
+
+### Option 2: API Upload
+
+_(Coming soon)_ Upload covers directly through the API:
+
+```http
+POST /api/books/:bookId/cover
+Authorization: Bearer <token>
+Content-Type: multipart/form-data
+
+[image binary data]
+```
+
+## Cover Quality
+
+### Best Practices
+
+<Tip>
+**Use high-resolution images**: Aim for at least 500px width for best display quality.
+</Tip>
+
+<Tip>
+**Prefer JPEG for photos**: Use JPG for photographic covers (smaller file size).
+</Tip>
+
+<Tip>
+**Use PNG for illustrations**: Use PNG for illustrated or comic covers (better quality for graphics).
+</Tip>
+
+<Tip>
+**Maintain aspect ratios**: Book covers typically use 2:3 aspect ratio (e.g., 400x600px).
+</Tip>
+
+### Image Optimization
+
+For optimal storage and performance:
+
+```bash
+# Optimize JPEG covers
+jpegoptim --size=150k --strip-all cover.jpg
+
+# Optimize PNG covers  
+optipng -o5 cover.png
+
+# Convert to WebP for smaller size
+cwebp -q 85 cover.jpg -o cover.webp
+```
+
+## Fallback Behavior
+
+When no cover is available:
+
+1. **API returns 404**: Clients should display a placeholder
+2. **Database stores NULL**: `cover_image_path` is null
+3. **No broken links**: Missing covers don't break the interface
+
+### Placeholder Covers
+
+Implement placeholder covers in your frontend:
+
+```javascript
+<img 
+  src={book.cover_url} 
+  onError={(e) => {
+    e.target.src = '/placeholder-book-cover.png';
+  }}
+  alt={book.title}
+/>
+```
+
+## Performance Considerations
+
+### Storage Usage
+
+Typical cover sizes:
+- **Small covers**: 5-20 KB
+- **Medium covers**: 30-80 KB  
+- **Large covers**: 100-300 KB
+
+For a 1,000-book library:
+- **Total cover storage**: ~50-150 MB
+
+<Info>
+Covers are stored once on disk and served multiple times, making them very storage-efficient.
+</Info>
+
+### Download Performance
+
+Dust downloads covers efficiently:
+- Parallel downloads during batch scans
+- 5MB size limit prevents runaway downloads
+- Timeouts prevent hanging on slow sources
+- Failed downloads don't block book imports
+
+## Troubleshooting
+
+### Missing Covers
+
+**Problem**: Book imported but no cover appears
+
+**Solutions**:
+1. Check if a local cover file exists in the book's directory
+2. Verify the book has an ISBN (needed for OpenLibrary lookup)
+3. Check logs for download errors
+4. Manually trigger metadata refresh
+
+### Incorrect Covers
+
+**Problem**: Wrong cover image displayed
+
+**Solutions**:
+1. Replace the local cover file with the correct image
+2. Refresh metadata to re-download from OpenLibrary
+3. Verify the ISBN is correct (wrong ISBN = wrong metadata)
+
+### Slow Cover Loading
+
+**Problem**: Covers load slowly in the web interface
+
+**Solutions**:
+1. Enable browser caching (Dust sends cache headers)
+2. Consider implementing a CDN for static assets
+3. Optimize cover file sizes (see optimization tips above)
+4. Use WebP format for ~30% smaller file sizes
+
+## Advanced: Custom Cover Sources
+
+While Dust uses OpenLibrary by default, you can extend it to use other cover sources:
+
+```zig
+// Example: Add Google Books cover support
+const google_cover_url = try std.fmt.allocPrint(
+    allocator,
+    "https://books.google.com/books/content?id={s}&printsec=frontcover&img=1&zoom=1",
+    .{google_books_id}
+);
+
+const cover_path = try cover_manager.downloadCover(book_path, google_cover_url);
+```
+
+Potential cover sources:
+- Google Books
+- Amazon Product API
+- Goodreads
+- LibraryThing
+- Custom image CDN

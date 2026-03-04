@@ -1,80 +1,258 @@
 ---
-title: "Quickstart"
-description: "Start building awesome documentation in minutes"
+title: Quickstart
+description: Get Dust running in minutes and start organizing your digital library
 ---
 
-## Get started in three steps
+Get your Dust server running in three simple steps. Choose the installation method that works best for you.
 
-Get your documentation site running locally and make your first customization.
+## Installation options
 
-### Step 1: Set up your local environment
+<Tabs>
+  <Tab title="Automated Script (Recommended)">
+    The automated installation script is the fastest way to get Dust running on Ubuntu/Debian systems.
 
-<AccordionGroup>
-  <Accordion icon="copy" title="Clone your docs locally">
-    During the onboarding process, you created a GitHub repository with your docs content if you didn't already have one. You can find a link to this repository in your [dashboard](https://dashboard.mintlify.com).
+    <Steps>
+      <Step title="Run the installation script">
+        Interactive mode (recommended - lets you configure directories and port):
+        
+        ```bash
+        curl -fsSL https://raw.githubusercontent.com/dust-books/dust-server/main/scripts/install.sh -o /tmp/install-dust.sh
+        sudo bash /tmp/install-dust.sh
+        ```
+
+        Or quick install with defaults:
+        
+        ```bash
+        curl -fsSL https://raw.githubusercontent.com/dust-books/dust-server/main/scripts/install.sh | sudo bash
+        ```
+
+        The script will:
+        - Download the latest release
+        - Install runtime dependencies (musl)
+        - Install to `/opt/dust`
+        - Set up systemd service
+        - Configure environment variables
+      </Step>
+
+      <Step title="Access the web interface">
+        Open `http://localhost:4001` in your browser (or your configured port)
+      </Step>
+
+      <Step title="Create your admin account">
+        The first user to register becomes the admin automatically
+      </Step>
+    </Steps>
+
+    <Note>
+      Non-interactive mode uses defaults (`/media/books:/media/comics`, port `4001`) which you can change later in `/opt/dust/.env`.
+    </Note>
+  </Tab>
+
+  <Tab title="Docker">
+    Run Dust with Docker for easy deployment and isolation.
+
+    <Steps>
+      <Step title="Create a docker-compose.yml file">
+        ```yaml docker-compose.yml
+        version: "3.8"
+
+        services:
+          dust:
+            image: dust-server:latest
+            container_name: dust
+            ports:
+              - "4001:4001"
+            environment:
+              - JWT_SECRET=${JWT_SECRET}
+              - DUST_DIRS=/app/books:/app/comics
+              - PORT=4001
+              - SCAN_INTERVAL_MINUTES=5
+            volumes:
+              - /path/to/your/books:/app/books:ro
+              - /path/to/your/comics:/app/comics:ro
+              - dust_data:/app/data
+            restart: unless-stopped
+
+        volumes:
+          dust_data:
+        ```
+      </Step>
+
+      <Step title="Generate JWT secret">
+        ```bash
+        echo "JWT_SECRET=$(openssl rand -base64 32)" > .env
+        ```
+      </Step>
+
+      <Step title="Start Dust">
+        ```bash
+        docker-compose up -d
+        ```
+      </Step>
+
+      <Step title="Access the interface">
+        Open `http://localhost:4001` and create your admin account
+      </Step>
+    </Steps>
+  </Tab>
+
+  <Tab title="Build from Source">
+    Build Dust from source for the latest features or custom modifications.
+
+    <Steps>
+      <Step title="Install prerequisites">
+        - Zig 0.15.2 or later
+        - Git
+      </Step>
+
+      <Step title="Clone and build">
+        ```bash
+        git clone https://github.com/dust-books/dust-server.git
+        cd dust-server
+        zig build -Doptimize=ReleaseSafe
+        ```
+      </Step>
+
+      <Step title="Set up environment">
+        ```bash
+        export JWT_SECRET=$(openssl rand -base64 32)
+        export DUST_DIRS="/path/to/books:/path/to/comics"
+        export PORT=4001
+        ```
+      </Step>
+
+      <Step title="Run the server">
+        ```bash
+        ./zig-out/bin/dust-server
+        ```
+      </Step>
+
+      <Step title="Access the interface">
+        Open `http://localhost:4001` and create your admin account
+      </Step>
+    </Steps>
+  </Tab>
+</Tabs>
+
+## First-time setup
+
+After installation, complete these steps to start using Dust:
+
+<Steps>
+  <Step title="Access the web interface">
+    Navigate to `http://localhost:4001` (or your configured port)
+  </Step>
+
+  <Step title="Create admin account">
+    Register the first user account - it automatically becomes the admin:
+    - Email address
+    - Password (minimum 8 characters)
+    - Optional: username and display name
+  </Step>
+
+  <Step title="Configure library directories">
+    If you didn't configure directories during installation, update them:
     
-    To clone the repository locally so that you can make and preview changes to your docs, follow the [Cloning a repository](https://docs.github.com/en/repositories/creating-and-managing-repositories/cloning-a-repository) guide in the GitHub docs.
-  </Accordion>
-  <Accordion icon="rectangle-terminal" title="Start the preview server">
-    1. Install the Mintlify CLI: `npm i -g mint`
-    2. Navigate to your docs directory and run: `mint dev`
-    3. Open `http://localhost:3000` to see your docs live!
-    
-    <Tip>Your preview updates automatically as you edit files.</Tip>
-  </Accordion>
-</AccordionGroup>
+    For systemd installation:
+    ```bash
+    sudo nano /opt/dust/.env
+    ```
 
-### Step 2: Deploy your changes
+    For Docker:
+    ```bash
+    nano .env
+    ```
 
-<AccordionGroup>
-  <Accordion icon="github" title="Install our GitHub app">
-    Install the Mintlify GitHub app from your [dashboard](https://dashboard.mintlify.com/settings/organization/github-app).
-    
-    Our GitHub app automatically deploys your changes to your docs site, so you don't need to manage deployments yourself.
+    Set your library paths:
+    ```bash
+    DUST_DIRS=/path/to/books:/path/to/comics
+    ```
+  </Step>
+
+  <Step title="Organize your media">
+    Set up your book and comic directories according to Dust's folder structure.
+    See the [Library Structure](/setup/library-structure) guide for details.
+  </Step>
+
+  <Step title="Trigger initial scan">
+    Go to the admin panel and click "Scan Library" to index your media
+  </Step>
+</Steps>
+
+## Verify installation
+
+Check that Dust is running properly:
+
+<CodeGroup>
+```bash Health check
+curl http://localhost:4001/health
+```
+
+```bash Service status (systemd)
+sudo systemctl status dust
+```
+
+```bash Service status (Docker)
+docker ps | grep dust
+```
+</CodeGroup>
+
+Expected response:
+```json
+{
+  "status": "ok",
+  "version": "0.1.0",
+  "service": "dust-server"
+}
+```
+
+## Common issues
+
+<Accordion title="Port 4001 already in use">
+  Change the port in your configuration:
+  
+  - **Systemd**: Edit `/opt/dust/.env` and set `PORT=8080`
+  - **Docker**: Update the port mapping in `docker-compose.yml`
+  - **Source build**: Set `export PORT=8080`
+  
+  Then restart the service.
 </Accordion>
-<Accordion icon="palette" title="Update your site name and colors">
-    For a first change, let's update the name and colors of your docs site.
 
-    1. Open `docs.json` in your editor.
-    2. Change the `"name"` field to your project name.
-    3. Update the `"colors"` to match your brand.
-    4. Save and see your changes instantly at `http://localhost:3000`.
+<Accordion title="Permission denied accessing library directories">
+  Ensure the Dust user has read permissions:
+  
+  ```bash
+  sudo setfacl -R -m u:dust:rX /path/to/books
+  sudo setfacl -R -m u:dust:rX /path/to/comics
+  ```
+</Accordion>
 
-    <Tip>Try changing the primary color to see an immediate difference!</Tip>
-  </Accordion>
-</AccordionGroup>
-
-### Step 3: Go live
-
-<Accordion icon="rocket" title="Publish your docs">
-  1. Commit and push your changes.
-  2. Your docs will update and be live in moments!
+<Accordion title="JWT_SECRET not set error">
+  Generate and set a JWT secret:
+  
+  ```bash
+  openssl rand -base64 32
+  ```
+  
+  Add it to your environment configuration file.
 </Accordion>
 
 ## Next steps
 
-Now that you have your docs running, explore these key features:
-
 <CardGroup cols={2}>
+  <Card title="Library Structure" icon="folder-tree" href="/setup/library-structure">
+    Learn how to organize your books and comics for optimal metadata fetching
+  </Card>
 
-<Card title="Write Content" icon="pen-to-square" href="/essentials/markdown">
-  Learn MDX syntax and start writing your documentation.
-</Card>
+  <Card title="Environment Variables" icon="gear" href="/setup/environment-variables">
+    Configure scanning intervals, API keys, and other settings
+  </Card>
 
-<Card title="Customize style" icon="palette" href="/essentials/settings">
-  Make your docs match your brand perfectly.
-</Card>
+  <Card title="User Management" icon="users" href="/features/user-authentication">
+    Set up additional users and manage permissions
+  </Card>
 
-<Card title="Add code examples" icon="square-code" href="/essentials/code">
-  Include syntax-highlighted code blocks.
-</Card>
-
-<Card title="API documentation" icon="code" href="/api-reference/introduction">
-  Auto-generate API docs from OpenAPI specs.
-</Card>
-
+  <Card title="Admin Panel" icon="shield" href="/guides/admin-panel">
+    Explore admin features for library management
+  </Card>
 </CardGroup>
-
-<Note>
-  **Need help?** See our [full documentation](https://mintlify.com/docs) or join our [community](https://mintlify.com/community).
-</Note>
