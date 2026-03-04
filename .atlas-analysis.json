@@ -1,0 +1,162 @@
+{
+  "projectType": "saas",
+  "projectName": "Dust",
+  "projectDescription": "A self-hosted media server for organizing and reading digital books and comics",
+  "theme": "almond",
+  "primaryColor": "#8B7355",
+  "lightColor": "#D4C4B0",
+  "darkColor": "#5C4A3A",
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Documentation",
+        "groups": [
+          {
+            "group": "Get Started",
+            "pages": [
+              "introduction",
+              "quickstart",
+              "installation"
+            ]
+          },
+          {
+            "group": "Setup & Configuration",
+            "pages": [
+              "setup/environment-variables",
+              "setup/library-structure",
+              "setup/docker-deployment",
+              "setup/systemd-service"
+            ]
+          },
+          {
+            "group": "Core Features",
+            "pages": [
+              "features/library-management",
+              "features/metadata-fetching",
+              "features/reading-progress",
+              "features/user-authentication",
+              "features/cover-art-management"
+            ]
+          },
+          {
+            "group": "User Guide",
+            "pages": [
+              "guides/organizing-books",
+              "guides/organizing-comics",
+              "guides/reading-interface",
+              "guides/admin-panel"
+            ]
+          },
+          {
+            "group": "Architecture",
+            "pages": [
+              "architecture/overview",
+              "architecture/server-architecture",
+              "architecture/client-architecture",
+              "architecture/database-schema"
+            ]
+          },
+          {
+            "group": "Contributing",
+            "pages": [
+              "contributing/getting-started",
+              "contributing/development-setup",
+              "contributing/code-style",
+              "contributing/release-process"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "API Reference",
+        "groups": [
+          {
+            "group": "Overview",
+            "pages": [
+              "api/introduction",
+              "api/authentication"
+            ]
+          },
+          {
+            "group": "Books",
+            "pages": [
+              "api/books/list-books",
+              "api/books/get-book",
+              "api/books/stream-book",
+              "api/books/book-cover",
+              "api/books/reading-progress",
+              "api/books/tags",
+              "api/books/archive"
+            ]
+          },
+          {
+            "group": "Authors",
+            "pages": [
+              "api/authors/list-authors",
+              "api/authors/get-author"
+            ]
+          },
+          {
+            "group": "Reading Lists",
+            "pages": [
+              "api/reading/currently-reading",
+              "api/reading/completed"
+            ]
+          },
+          {
+            "group": "User Management",
+            "pages": [
+              "api/users/register",
+              "api/users/login",
+              "api/users/logout",
+              "api/users/profile"
+            ]
+          },
+          {
+            "group": "Admin",
+            "pages": [
+              "api/admin/list-users",
+              "api/admin/manage-user",
+              "api/admin/invitations",
+              "api/admin/auth-settings",
+              "api/admin/scan-library",
+              "api/admin/refresh-metadata"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "keyFeatures": [
+    "Self-hosted ebook and comic management",
+    "Web-based reader with EPUB and PDF support",
+    "Automatic metadata fetching from OpenLibrary and Google Books",
+    "User authentication with JWT and invitation system",
+    "Reading progress tracking across devices",
+    "Automatic library scanning and organization",
+    "Role-based permissions and admin panel",
+    "Cover art management with automatic downloads"
+  ],
+  "publicApiSurface": [
+    "GET /books - List all books with authors",
+    "GET /books/:id - Get book details",
+    "GET /books/:id/stream - Stream book content",
+    "GET /covers/:id - Get book cover image",
+    "GET /books/authors - List all authors",
+    "GET /books/authors/:id - Get author with books",
+    "GET /books/:id/progress - Get reading progress",
+    "PUT /books/:id/progress - Update reading progress",
+    "GET /reading/currently-reading - Get currently reading books",
+    "GET /reading/completed - Get completed books",
+    "GET /tags - List all tags",
+    "POST /books/:id/tags - Add tag to book",
+    "DELETE /books/:id/tags/:tagName - Remove tag from book",
+    "POST /auth/register - Register new user",
+    "POST /auth/login - Login user",
+    "POST /auth/logout - Logout user",
+    "GET /users/me - Get current user profile",
+    "GET /admin/users - List all users (admin)",
+    "POST /admin/scan - Trigger library scan (admin)",
+    "POST /admin/books/:id/refresh-metadata - Refresh book metadata (admin)"
+  ]
+}
