@@ -28,7 +28,7 @@ This endpoint requires admin authentication. Include a valid JWT token with admi
 ### Example Request
 
 ```bash
-curl -X GET http://localhost:3000/admin/auth-settings \
+curl -X GET http://localhost:4001/admin/auth-settings \
   -H "Authorization: Bearer YOUR_ADMIN_JWT_TOKEN"
 ```
 
@@ -73,7 +73,7 @@ This endpoint requires admin authentication. Include a valid JWT token with admi
 ### Example Request
 
 ```bash
-curl -X PUT http://localhost:3000/admin/auth-settings \
+curl -X PUT http://localhost:4001/admin/auth-settings \
   -H "Authorization: Bearer YOUR_ADMIN_JWT_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{

@@ -46,7 +46,7 @@ Authenticates a user with email and password, returning a JWT token for subseque
 ### Example Request
 
 ```bash
-curl -X POST http://localhost:3000/auth/login \
+curl -X POST http://localhost:4001/auth/login \
   -H "Content-Type: application/json" \
   -d '{
     "email": "user@example.com",
@@ -73,7 +73,7 @@ curl -X POST http://localhost:3000/auth/login \
 Once authenticated, include the token in subsequent requests:
 
 ```bash
-curl -X GET http://localhost:3000/users/me \
+curl -X GET http://localhost:4001/users/me \
   -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
 ```
 

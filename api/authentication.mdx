@@ -55,11 +55,11 @@ Before registering, check the server's authentication flow configuration:
 <CodeGroup>
 
 ```bash cURL
-curl http://localhost:8080/auth/settings
+curl http://localhost:4001/auth/settings
 ```
 
 ```javascript JavaScript
-const response = await fetch('http://localhost:8080/auth/settings');
+const response = await fetch('http://localhost:4001/auth/settings');
 const settings = await response.json();
 console.log(settings.auth_flow); // "signup" or "invitation"
 ```
@@ -83,7 +83,7 @@ If `auth_flow` is set to `"invitation"`, an invitation token is required for reg
 <CodeGroup>
 
 ```bash cURL
-curl -X POST http://localhost:8080/auth/register \
+curl -X POST http://localhost:4001/auth/register \
   -H "Content-Type: application/json" \
   -d '{
     "email": "user@example.com",
@@ -93,7 +93,7 @@ curl -X POST http://localhost:8080/auth/register \
 ```
 
 ```javascript JavaScript
-const response = await fetch('http://localhost:8080/auth/register', {
+const response = await fetch('http://localhost:4001/auth/register', {
   method: 'POST',
   headers: {
     'Content-Type': 'application/json',
@@ -112,7 +112,7 @@ const data = await response.json();
 import requests
 
 response = requests.post(
-    'http://localhost:8080/auth/register',
+    'http://localhost:4001/auth/register',
     json={
         'email': 'user@example.com',
         'password': 'securepassword123',
@@ -165,7 +165,7 @@ Authenticate with email and password to receive a JWT token:
 <CodeGroup>
 
 ```bash cURL
-curl -X POST http://localhost:8080/auth/login \
+curl -X POST http://localhost:4001/auth/login \
   -H "Content-Type: application/json" \
   -d '{
     "email": "user@example.com",
@@ -174,7 +174,7 @@ curl -X POST http://localhost:8080/auth/login \
 ```
 
 ```javascript JavaScript
-const response = await fetch('http://localhost:8080/auth/login', {
+const response = await fetch('http://localhost:4001/auth/login', {
   method: 'POST',
   headers: {
     'Content-Type': 'application/json',
@@ -196,7 +196,7 @@ localStorage.setItem('auth_token', token);
 import requests
 
 response = requests.post(
-    'http://localhost:8080/auth/login',
+    'http://localhost:4001/auth/login',
     json={
         'email': 'user@example.com',
         'password': 'securepassword123'
@@ -242,14 +242,14 @@ Include the JWT token in the `Authorization` header using the Bearer scheme:
 <CodeGroup>
 
 ```bash cURL
-curl http://localhost:8080/users/me \
+curl http://localhost:4001/users/me \
   -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
 ```
 
 ```javascript JavaScript
 const token = localStorage.getItem('auth_token');
 
-const response = await fetch('http://localhost:8080/users/me', {
+const response = await fetch('http://localhost:4001/users/me', {
   headers: {
     'Authorization': `Bearer ${token}`
   }
@@ -266,7 +266,7 @@ headers = {
 }
 
 response = requests.get(
-    'http://localhost:8080/users/me',
+    'http://localhost:4001/users/me',
     headers=headers
 )
 
@@ -280,7 +280,7 @@ user = response.json()
 Retrieve the authenticated user's profile:
 
 ```bash
-curl http://localhost:8080/users/me \
+curl http://localhost:4001/users/me \
   -H "Authorization: Bearer YOUR_TOKEN"
 ```
 
@@ -314,14 +314,14 @@ Invalidate the current session:
 <CodeGroup>
 
 ```bash cURL
-curl -X POST http://localhost:8080/auth/logout \
+curl -X POST http://localhost:4001/auth/logout \
   -H "Authorization: Bearer YOUR_TOKEN"
 ```
 
 ```javascript JavaScript
 const token = localStorage.getItem('auth_token');
 
-await fetch('http://localhost:8080/auth/logout', {
+await fetch('http://localhost:4001/auth/logout', {
   method: 'POST',
   headers: {
     'Authorization': `Bearer ${token}`

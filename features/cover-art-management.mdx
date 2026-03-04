@@ -226,18 +226,6 @@ wget https://example.com/better-cover.jpg -O cover.jpg
 
 On the next scan or metadata refresh, Dust will use your custom cover.
 
-### Option 2: API Upload
-
-_(Coming soon)_ Upload covers directly through the API:
-
-```http
-POST /api/books/:bookId/cover
-Authorization: Bearer <token>
-Content-Type: multipart/form-data
-
-[image binary data]
-```
-
 ## Cover Quality
 
 ### Best Practices

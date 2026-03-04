@@ -9,10 +9,10 @@ The Dust API provides RESTful endpoints for managing your self-hosted ebook and 
 
 ## Base URL
 
-The API runs on your self-hosted Dust server. By default, the server listens on port 8080:
+The API runs on your self-hosted Dust server. By default, the server listens on port 4001:
 
 ```
-http://localhost:8080
+http://localhost:4001
 ```
 
 For production deployments, configure your base URL according to your server's address:
@@ -121,7 +121,7 @@ Admin endpoints require admin role. The first registered user automatically rece
 Check if the server is running:
 
 ```bash
-curl http://localhost:8080/health
+curl http://localhost:4001/health
 ```
 
 ```json
